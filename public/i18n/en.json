@@ -1,0 +1,36 @@
+{
+  "tagline": "Tune in to Mumbai's air",
+  "air_categories": {
+    "fresh": "Fresh",
+    "okay": "Okay",
+    "hazy": "Hazy",
+    "heavy": "Heavy",
+    "severe": "Severe"
+  },
+  "bulletin_templates": {
+    "standard": "This is Hawa dot FM, broadcasting for {station_name} at {time_str}. The air is currently {air_category}, with PM 2.5 measuring {pm25} micrograms per cubic metre. This reading is {trend_text} compared to previous hours, and is {baseline_text} the usual level for this time of day.",
+    "anomaly_suffix": " Attention: An unusual rise has been detected here; this is worth investigating.",
+    "trend_rising": "rising",
+    "trend_falling": "clearing up",
+    "trend_steady": "steady",
+    "baseline_above": "higher than",
+    "baseline_below": "lower than",
+    "baseline_near": "consistent with",
+    "no_signal": "Station signal weak or unavailable at this hour. Static detected."
+  },
+  "ui": {
+    "tune_knob": "Station Dial",
+    "time_knob": "Time Travel",
+    "play": "Auto Play",
+    "pause": "Pause",
+    "live": "Measured",
+    "replay": "Event Replay",
+    "no_signal": "NO SIGNAL",
+    "anomaly_badge": "Unusual Rise Detected",
+    "detective_tab": "Air Detective",
+    "observatory_tab": "Air Observatory",
+    "share": "Share Card",
+    "about": "About Hawa.fm",
+    "explanation": "How is this calculated?"
+  }
+}

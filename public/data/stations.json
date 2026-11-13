@@ -1,0 +1,54 @@
+[
+  {
+    "id": "11606",
+    "name": "Borivali East",
+    "fullName": "Borivali East, Mumbai - IITM",
+    "agency": "IITM",
+    "area": "Suburban North",
+    "description": "National Park border & northern rail corridor",
+    "frequency": 91.1,
+    "freqLabel": "91.1 FM",
+    "lat": 19.23241,
+    "lon": 72.86895,
+    "sensor_id": "12236418"
+  },
+  {
+    "id": "11611",
+    "name": "Malad West",
+    "fullName": "Malad West, Mumbai - IITM",
+    "agency": "IITM",
+    "area": "Western Suburbs",
+    "description": "Dense coastal residential & commercial zone",
+    "frequency": 95.0,
+    "freqLabel": "95.0 FM",
+    "lat": 19.19709,
+    "lon": 72.82204,
+    "sensor_id": "12236426"
+  },
+  {
+    "id": "3409511",
+    "name": "Shivaji Nagar",
+    "fullName": "Shivaji Nagar, Mumbai - BMC",
+    "agency": "BMC",
+    "area": "Eastern Suburbs",
+    "description": "Eastern corridor & industrial-residential mix",
+    "frequency": 98.3,
+    "freqLabel": "98.3 FM",
+    "lat": 19.060498,
+    "lon": 72.923356,
+    "sensor_id": "12238576"
+  },
+  {
+    "id": "3409510",
+    "name": "Byculla",
+    "fullName": "Byculla, Mumbai - BMC",
+    "agency": "BMC",
+    "area": "South Mumbai",
+    "description": "Historic city core & harbour proximity",
+    "frequency": 104.8,
+    "freqLabel": "104.8 FM",
+    "lat": 18.9767,
+    "lon": 72.838,
+    "sensor_id": "12238567"
+  }
+]

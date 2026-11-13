@@ -1,0 +1,37 @@
+{
+  "_note": "Drafted with assistance from Gemini and verified for grammar. Marked for final native-speaker review.",
+  "tagline": "ऐका मुंबईचा श्वास",
+  "air_categories": {
+    "fresh": "स्वच्छ",
+    "okay": "मध्यम",
+    "hazy": "धुसर",
+    "heavy": "जड",
+    "severe": "अति वाईट"
+  },
+  "bulletin_templates": {
+    "standard": "हे आहे हवा डॉट एफएम. {station_name} केंद्रावरून {time_str} चे अपडेट. सध्या हवा {air_category} असून, पीएम 2.5 ची पातळी {pm25} मायक्रोग्रॅम प्रति घनमीटर आहे. मागील तासांच्या तुलनेत ही पातळी {trend_text} आहे, आणि दिवसाच्या या वेळेच्या सरासरीपेक्षा {baseline_text} आहे.",
+    "anomaly_suffix": " लक्ष द्या: येथे हवेच्या पातळीत अनपेक्षित वाढ झाली आहे; यावर अधिक निरीक्षण आवश्यक आहे.",
+    "trend_rising": "वाढत",
+    "trend_falling": "सुधारत",
+    "trend_steady": "स्थिर",
+    "baseline_above": "जास्त",
+    "baseline_below": "कमी",
+    "baseline_near": "जवळपास",
+    "no_signal": "या वेळेस सिग्नल उपलब्ध नाही. रेडिओ स्टॅटिक सक्रिय."
+  },
+  "ui": {
+    "tune_knob": "स्टेशन ट्यून",
+    "time_knob": "वेळ प्रवास",
+    "play": "सुरू करा",
+    "pause": "थांबवा",
+    "live": "मापन डेटा",
+    "replay": "इव्हेंट रीप्ले",
+    "no_signal": "सिग्नल नाही",
+    "anomaly_badge": "अनपेक्षित वाढ",
+    "detective_tab": "हवा शोधक",
+    "observatory_tab": "हवा वेधशाळा",
+    "share": "कार्ड शेअर करा",
+    "about": "हवा.एफएम विषयी",
+    "explanation": "हे कसे मोजले जाते?"
+  }
+}

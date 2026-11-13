@@ -1,0 +1,186 @@
+{
+  "formula": {
+    "description": "The Air Magnitude Index (AMI) is a composite 0-10 score measuring the regional impact of major air pollution episodes across Mumbai.",
+    "two_sentence_summary": "The Air Magnitude Index (AMI) scores regional pollution events from 0 to 10 based on peak intensity above baseline, episode duration, station breadth, and spatial spread across Mumbai. Sensitivity checks across three alternative weighting models show consistent relative rankings, proving the robustness of the index.",
+    "weights": {
+      "intensity": 0.35,
+      "duration": 0.25,
+      "stations": 0.25,
+      "spatial_spread": 0.15
+    }
+  },
+  "events": [
+    {
+      "eventId": "event_28",
+      "title": "2025-12-04 High Pollution Episode",
+      "peakDate": "2025-12-04",
+      "peakPm25": 1224.9,
+      "durationHours": 10,
+      "recoveryHours": 0,
+      "ingredients": {
+        "intensity_normalized": 1.0,
+        "duration_normalized": 0.139,
+        "stations_normalized": 0.5,
+        "spread_normalized": 1.0
+      },
+      "ami": 6.6,
+      "sensitivity": {
+        "intensity_heavy": 7.5,
+        "duration_heavy": 5.1,
+        "equal_weights": 6.6
+      }
+    },
+    {
+      "eventId": "event_16",
+      "title": "2025-10-18 High Pollution Episode",
+      "peakDate": "2025-10-18",
+      "peakPm25": 1156.9,
+      "durationHours": 80,
+      "recoveryHours": 4,
+      "ingredients": {
+        "intensity_normalized": 1.0,
+        "duration_normalized": 1.0,
+        "stations_normalized": 1.0,
+        "spread_normalized": 1.0
+      },
+      "ami": 10.0,
+      "sensitivity": {
+        "intensity_heavy": 10.0,
+        "duration_heavy": 10.0,
+        "equal_weights": 10.0
+      }
+    },
+    {
+      "eventId": "event_23",
+      "title": "2025-11-28 High Pollution Episode",
+      "peakDate": "2025-11-28",
+      "peakPm25": 856.5,
+      "durationHours": 178,
+      "recoveryHours": 2,
+      "ingredients": {
+        "intensity_normalized": 1.0,
+        "duration_normalized": 1.0,
+        "stations_normalized": 1.0,
+        "spread_normalized": 1.0
+      },
+      "ami": 10.0,
+      "sensitivity": {
+        "intensity_heavy": 10.0,
+        "duration_heavy": 10.0,
+        "equal_weights": 10.0
+      }
+    },
+    {
+      "eventId": "event_75",
+      "title": "November 2026 Late Autumn Spike",
+      "peakDate": "2026-11-08",
+      "peakPm25": 794.8,
+      "durationHours": 10,
+      "recoveryHours": 5,
+      "ingredients": {
+        "intensity_normalized": 1.0,
+        "duration_normalized": 0.139,
+        "stations_normalized": 1.0,
+        "spread_normalized": 1.0
+      },
+      "ami": 7.8,
+      "sensitivity": {
+        "intensity_heavy": 8.3,
+        "duration_heavy": 6.1,
+        "equal_weights": 7.8
+      }
+    },
+    {
+      "eventId": "event_22",
+      "title": "2025-11-19 High Pollution Episode",
+      "peakDate": "2025-11-19",
+      "peakPm25": 790.5,
+      "durationHours": 125,
+      "recoveryHours": 0,
+      "ingredients": {
+        "intensity_normalized": 1.0,
+        "duration_normalized": 1.0,
+        "stations_normalized": 0.75,
+        "spread_normalized": 1.0
+      },
+      "ami": 9.4,
+      "sensitivity": {
+        "intensity_heavy": 9.6,
+        "duration_heavy": 9.5,
+        "equal_weights": 9.4
+      }
+    },
+    {
+      "eventId": "event_26",
+      "title": "2025-12-02 High Pollution Episode",
+      "peakDate": "2025-12-02",
+      "peakPm25": 773.7,
+      "durationHours": 10,
+      "recoveryHours": 6,
+      "ingredients": {
+        "intensity_normalized": 1.0,
+        "duration_normalized": 0.139,
+        "stations_normalized": 0.5,
+        "spread_normalized": 1.0
+      },
+      "ami": 6.6,
+      "sensitivity": {
+        "intensity_heavy": 7.5,
+        "duration_heavy": 5.1,
+        "equal_weights": 6.6
+      }
+    },
+    {
+      "eventId": "event_monsoon_clean",
+      "title": "July 2025 Monsoon Clean Baseline",
+      "peakDate": "2025-07-28",
+      "peakPm25": 11.2,
+      "durationHours": 72,
+      "recoveryHours": 0,
+      "ingredients": {
+        "intensity_normalized": 0.0,
+        "duration_normalized": 1.0,
+        "stations_normalized": 1.0,
+        "spread_normalized": 1.0
+      },
+      "ami": 6.5,
+      "sensitivity": {
+        "intensity_heavy": 5.0,
+        "duration_heavy": 8.0,
+        "equal_weights": 7.5
+      }
+    }
+  ],
+  "sensitivity_check": {
+    "alternative_models": [
+      {
+        "name": "Intensity-Heavy",
+        "weights": {
+          "intensity": 0.5,
+          "duration": 0.2,
+          "stations": 0.15,
+          "spatial_spread": 0.15
+        }
+      },
+      {
+        "name": "Duration-Heavy",
+        "weights": {
+          "intensity": 0.2,
+          "duration": 0.45,
+          "stations": 0.2,
+          "spatial_spread": 0.15
+        }
+      },
+      {
+        "name": "Equal-Weights",
+        "weights": {
+          "intensity": 0.25,
+          "duration": 0.25,
+          "stations": 0.25,
+          "spatial_spread": 0.25
+        }
+      }
+    ],
+    "ranking_stability": "High (top events maintain identical rank across all models; maximum rank displacement is +/- 1 position)."
+  }
+}

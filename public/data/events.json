@@ -1,0 +1,137 @@
+[
+  {
+    "id": "event_28",
+    "startIndex": 6176,
+    "endIndex": 6185,
+    "startTime": "2025-12-03T22:00",
+    "endTime": "2025-12-04T08:00",
+    "peakIndex": 6182,
+    "peakTime": "2025-12-04T05:00",
+    "peakPm25": 1224.9,
+    "durationHours": 10,
+    "recoveryHours": 0,
+    "affectedStations": [
+      "3409511",
+      "11611"
+    ],
+    "title": "2025-12-04 High Pollution Episode",
+    "tag": "Episode"
+  },
+  {
+    "id": "event_16",
+    "startIndex": 5197,
+    "endIndex": 5276,
+    "startTime": "2025-10-18T13:00",
+    "endTime": "2025-10-22T07:00",
+    "peakIndex": 5205,
+    "peakTime": "2025-10-18T21:00",
+    "peakPm25": 1156.9,
+    "durationHours": 80,
+    "recoveryHours": 4,
+    "affectedStations": [
+      "11606",
+      "3409511",
+      "11611",
+      "3409510"
+    ],
+    "title": "2025-10-18 High Pollution Episode",
+    "tag": "Episode"
+  },
+  {
+    "id": "event_23",
+    "startIndex": 5900,
+    "endIndex": 6077,
+    "startTime": "2025-11-21T12:00",
+    "endTime": "2025-11-29T13:00",
+    "peakIndex": 6042,
+    "peakTime": "2025-11-28T00:00",
+    "peakPm25": 856.5,
+    "durationHours": 178,
+    "recoveryHours": 2,
+    "affectedStations": [
+      "11606",
+      "3409511",
+      "11611",
+      "3409510"
+    ],
+    "title": "2025-11-28 High Pollution Episode",
+    "tag": "Episode"
+  },
+  {
+    "id": "event_75",
+    "startIndex": 13120,
+    "endIndex": 13129,
+    "startTime": "2026-11-08T21:00",
+    "endTime": "2026-11-09T08:00",
+    "peakIndex": 13122,
+    "peakTime": "2026-11-08T23:00",
+    "peakPm25": 794.8,
+    "durationHours": 10,
+    "recoveryHours": 5,
+    "affectedStations": [
+      "11606",
+      "3409511",
+      "11611",
+      "3409510"
+    ],
+    "title": "November 2026 Late Autumn Spike",
+    "tag": "Autumn"
+  },
+  {
+    "id": "event_22",
+    "startIndex": 5773,
+    "endIndex": 5897,
+    "startTime": "2025-11-15T10:00",
+    "endTime": "2025-11-21T09:00",
+    "peakIndex": 5855,
+    "peakTime": "2025-11-19T10:00",
+    "peakPm25": 790.5,
+    "durationHours": 125,
+    "recoveryHours": 0,
+    "affectedStations": [
+      "11606",
+      "3409511",
+      "11611"
+    ],
+    "title": "2025-11-19 High Pollution Episode",
+    "tag": "Episode"
+  },
+  {
+    "id": "event_26",
+    "startIndex": 6131,
+    "endIndex": 6140,
+    "startTime": "2025-12-01T23:00",
+    "endTime": "2025-12-02T09:00",
+    "peakIndex": 6135,
+    "peakTime": "2025-12-02T04:00",
+    "peakPm25": 773.7,
+    "durationHours": 10,
+    "recoveryHours": 6,
+    "affectedStations": [
+      "3409511",
+      "11611"
+    ],
+    "title": "2025-12-02 High Pollution Episode",
+    "tag": "Episode"
+  },
+  {
+    "id": "event_monsoon_clean",
+    "title": "July 2025 Monsoon Clean Baseline",
+    "tag": "Monsoon",
+    "startIndex": 3362,
+    "endIndex": 3434,
+    "startTime": "2025-07-27T11:00",
+    "endTime": "2025-07-30T14:00",
+    "peakIndex": 3386,
+    "peakTime": "2025-07-28T12:00",
+    "peakPm25": 11.2,
+    "durationHours": 72,
+    "recoveryHours": 0,
+    "affectedStations": [
+      "11606",
+      "11611",
+      "3409511",
+      "3409510"
+    ]
+  }
+]

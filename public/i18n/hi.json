@@ -1,0 +1,37 @@
+{
+  "_note": "Drafted with assistance from Gemini and verified for grammar. Marked for final native-speaker review.",
+  "tagline": "मुंबई की हवा सुनिए",
+  "air_categories": {
+    "fresh": "ताज़ा",
+    "okay": "सामान्य",
+    "hazy": "धुंधली",
+    "heavy": "भारी",
+    "severe": "अति गंभीर"
+  },
+  "bulletin_templates": {
+    "standard": "यह हवा डॉट एफएम है, {station_name} से {time_str} का बुलेटिन। यहाँ की हवा इस समय {air_category} है, और पीएम 2.5 का स्तर {pm25} माइक्रोग्राम प्रति घन मीटर है। पिछले घंटों की तुलना में हवा {trend_text} है, और दिन के इस पहर के सामान्य स्तर से {baseline_text} है।",
+    "anomaly_suffix": " ध्यान दें: यहाँ हवा में एक अप्रत्याशित उछाल देखा गया है; इसकी पड़ताल ज़रूरी है।",
+    "trend_rising": "बढ़ रही",
+    "trend_falling": "साफ़ हो रही",
+    "trend_steady": "स्थिर",
+    "baseline_above": "काफ़ी अधिक",
+    "baseline_below": "कम",
+    "baseline_near": "अनुरूप",
+    "no_signal": "इस समय सिग्नल उपलब्ध नहीं है। रेडियो स्टैटिक सक्रिय है।"
+  },
+  "ui": {
+    "tune_knob": "स्टेशन ट्यून",
+    "time_knob": "समय चक्र",
+    "play": "चलाएं",
+    "pause": "रोकें",
+    "live": "प्रत्यक्ष डेटा",
+    "replay": "इवेंट रीप्ले",
+    "no_signal": "सिग्नल नहीं",
+    "anomaly_badge": "असामान्य उछाल",
+    "detective_tab": "हवा जासूस",
+    "observatory_tab": "वेधशाला",
+    "share": "कार्ड साझा करें",
+    "about": "हवा.एफएम के बारे में",
+    "explanation": "यह कैसे मापा जाता है?"
+  }
+}
