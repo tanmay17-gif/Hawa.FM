@@ -557,6 +557,9 @@ def run_pipeline():
             "trend_rising": "rising",
             "trend_falling": "clearing up",
             "trend_steady": "steady",
+            "trend_rising_anomaly": "surging sharply",
+            "trend_easing_anomaly": "easing slightly from its peak but remaining unusually high",
+            "trend_steady_anomaly": "staying persistently elevated",
             "baseline_above": "higher than",
             "baseline_below": "lower than",
             "baseline_near": "consistent with",
@@ -565,17 +568,21 @@ def run_pipeline():
         "ui": {
             "tune_knob": "Station Dial",
             "time_knob": "Time Travel",
+            "listen": "Listen",
             "play": "Auto Play",
             "pause": "Pause",
             "live": "Measured",
             "replay": "Event Replay",
             "no_signal": "NO SIGNAL",
             "anomaly_badge": "Unusual Rise Detected",
-            "detective_tab": "Air Detective",
+            "detective_tab": "The Case Board",
             "observatory_tab": "Air Observatory",
             "share": "Share Card",
             "about": "About Hawa.fm",
-            "explanation": "How is this calculated?"
+            "explanation": "How is this calculated?",
+            "scope_widespread": "Many stations rose together",
+            "scope_isolated": "Only here",
+            "baseline_label": "Usual for this hour"
         }
     }
     

@@ -38,25 +38,24 @@ export const LcdScreen: React.FC<LcdScreenProps> = ({
     return `${d} ${monthName} ${y}, ${timePart} IST`;
   }, [currentTimestamp]);
 
-  // Color theme based on category
-  const categoryColors = {
-    fresh: 'text-emerald-400 border-emerald-500/40 bg-emerald-950/40',
-    okay: 'text-lime-300 border-lime-500/40 bg-lime-950/40',
-    hazy: 'text-amber-300 border-amber-500/40 bg-amber-950/40',
-    heavy: 'text-orange-400 border-orange-500/40 bg-orange-950/40',
-    severe: 'text-rose-400 border-rose-500/40 bg-rose-950/40'
+  // Color theme based on category (Gouache postcard palette)
+  const categoryPills: Record<AirCategory, { text: string; bg: string; border: string }> = {
+    fresh: { text: '#1E6347', bg: 'rgba(235, 248, 241, 0.92)', border: '#8BA888' },
+    okay: { text: '#3E6627', bg: 'rgba(242, 248, 230, 0.92)', border: '#A6C58B' },
+    hazy: { text: '#8C5A14', bg: 'rgba(255, 247, 230, 0.92)', border: '#E9A23B' },
+    heavy: { text: '#9E3C25', bg: 'rgba(255, 238, 232, 0.92)', border: '#C8553D' },
+    severe: { text: '#781A2D', bg: 'rgba(253, 230, 235, 0.92)', border: '#B82845' }
   };
+
+  const currentTheme = categoryPills[airCategory] || categoryPills.okay;
 
   return (
     <div
-      className="relative w-full rounded-lg overflow-hidden border-4 border-[#2b251a] shadow-[inset_0_4px_12px_rgba(0,0,0,0.9),0_6px_16px_rgba(0,0,0,0.7)]"
-      style={{
-        background: '#090d0b'
-      }}
+      className="relative w-full rounded-xl overflow-hidden border-4 border-[#CBBCA3] shadow-[inset_0_2px_8px_rgba(43,42,51,0.15),0_6px_18px_rgba(43,42,51,0.08)] bg-[#F6EFE2]"
     >
-      {/* Outer LCD Phosphor Frame with Brass Inlay Ring */}
+      {/* Outer Window Frame showing Painted Mumbai Skyline */}
       <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full overflow-hidden">
-        {/* HERO: The Living Skyline */}
+        {/* HERO: The Living Skyline (Gouache Mumbai Postcard) */}
         <LivingSkyline
           pm25={pm25}
           timestamp={currentTimestamp}
@@ -64,89 +63,95 @@ export const LcdScreen: React.FC<LcdScreenProps> = ({
           stationName={currentStation.name}
         />
 
-        {/* Vintage Glass Scanlines and Glare */}
-        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px] opacity-35 mix-blend-overlay" />
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-transparent via-white/5 to-white/10" />
+        {/* Subtle glass reflection & paper edge */}
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-transparent via-white/10 to-white/20" />
+        <div className="absolute inset-0 pointer-events-none border border-black/5 rounded-lg" />
 
-        {/* TOP OVERLAY: Station Name, Frequency, and Permanent Mode Badge */}
-        <div className="absolute top-2.5 inset-x-3 flex items-start justify-between z-20 pointer-events-none">
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/60 text-[#d4af37] border border-[#d4af37]/40 shadow-sm backdrop-blur-xs flex items-center gap-1">
-                <Radio className="w-2.5 h-2.5 text-[#d4af37]" />
-                {currentStation.freqLabel}
-              </span>
-              <span className="font-mono text-[11px] sm:text-xs font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] uppercase tracking-wider">
-                {currentStation.name}
+        {/* TOP OVERLAY: Station Name, Subtitle, Permanent Mode Badge, and Anomaly Banner */}
+        <div className="absolute top-2.5 inset-x-3 z-20 pointer-events-none flex flex-col gap-1.5">
+          <div className="flex items-start justify-between">
+            {/* Station Header */}
+            <div className="flex flex-col max-w-[62%] sm:max-w-[68%]">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-body text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#F6EFE2]/95 text-[#2B2A33] border border-[#CBBCA3] shadow-xs backdrop-blur-xs flex items-center gap-1">
+                  <Radio className="w-2.5 h-2.5 text-[#C8553D]" />
+                  {currentStation.freqLabel}
+                </span>
+                <span className="font-wordmark text-xs sm:text-sm font-bold text-[#2B2A33] drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] tracking-wide">
+                  {currentStation.name}
+                </span>
+              </div>
+              <span className="text-[10px] font-body text-[#3B3A44] font-medium drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] ml-0.5 mt-0.5 truncate">
+                {currentStation.area} • {currentStation.agency}
               </span>
             </div>
-            <span className="text-[9px] font-mono text-zinc-300 drop-shadow ml-0.5 mt-0.5">
-              {currentStation.area} • {currentStation.agency}
-            </span>
+
+            {/* PERMANENT BADGE: MEASURED / REPLAY (Strict Rule 3 compliant) */}
+            <div className="flex flex-col items-end shrink-0">
+              <span
+                className={`font-body text-[9px] sm:text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-md border shadow-xs backdrop-blur-xs uppercase ${
+                  modeBadge === 'MEASURED'
+                    ? 'bg-[#EBF8F1]/95 text-[#1E6347] border-[#8BA888]'
+                    : 'bg-[#FFF7E6]/95 text-[#8C5A14] border-[#E9A23B]'
+                }`}
+              >
+                ● {modeBadge}
+              </span>
+              <span className="text-[9px] font-body text-[#3B3A44] font-semibold drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)] mt-0.5">
+                {formattedTime}
+              </span>
+            </div>
           </div>
 
-          {/* PERMANENT BADGE: MEASURED / REPLAY (Strict Rule 3 compliant) */}
-          <div className="flex flex-col items-end">
-            <span
-              className={`font-mono text-[9px] sm:text-[10px] font-bold tracking-widest px-2 py-0.5 rounded border shadow-sm backdrop-blur-xs uppercase ${
-                modeBadge === 'MEASURED'
-                  ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/50'
-                  : 'bg-amber-950/80 text-amber-300 border-amber-500/50'
-              }`}
-            >
-              ● {modeBadge}
-            </span>
-            <span className="text-[9px] font-mono text-zinc-300 drop-shadow mt-1">
-              {formattedTime}
-            </span>
-          </div>
+          {/* SUSTAINED ANOMALY ALERT BADGE: Clean row below subtitle, zero overlap */}
+          {isAnomaly && pm25 !== null && (
+            <div className="self-start pointer-events-auto">
+              <button
+                onClick={onOpenDetective}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#C8553D] hover:bg-[#B3452E] text-white font-body font-bold text-[10px] shadow-sm animate-pulse transition-transform"
+                title="Click to view The Case Board investigation"
+              >
+                <AlertCircle className="w-3.5 h-3.5 text-white shrink-0" />
+                <span>UNUSUAL RISE DETECTED</span>
+                {anomalyScope && (
+                  <span className="text-[9px] bg-black/20 px-1.5 py-0.2 rounded font-medium">
+                    {anomalyScope === 'widespread' ? 'Many stations rose together' : 'Only here'}
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
         </div>
-
-        {/* SUSTAINED ANOMALY ALERT BADGE (Only when mathematically detected) */}
-        {isAnomaly && pm25 !== null && (
-          <div className="absolute top-12 left-3 z-20">
-            <button
-              onClick={onOpenDetective}
-              className="pointer-events-auto flex items-center gap-1.5 px-2 py-1 rounded bg-amber-500/90 hover:bg-amber-400 text-black font-mono font-bold text-[10px] shadow-lg animate-bounce transition-transform"
-              title="Click to view Air Detective investigation"
-            >
-              <AlertCircle className="w-3.5 h-3.5 fill-black stroke-amber-400" />
-              <span>UNUSUAL RISE DETECTED</span>
-              {anomalyScope && (
-                <span className="text-[8px] bg-black/20 px-1 rounded uppercase">
-                  {anomalyScope}
-                </span>
-              )}
-            </button>
-          </div>
-        )}
 
         {/* BOTTOM OVERLAY: Big Friendly Air Quality Word & Monospace PM2.5 */}
         <div className="absolute bottom-2.5 inset-x-3 flex items-end justify-between z-20 pointer-events-none">
           {/* Friendly Air Category */}
           <div className="flex flex-col">
-            <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-400 drop-shadow">
-              AIR QUALITY
+            <span className="text-[9px] font-body font-bold uppercase tracking-wider text-[#4A4854] drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
+              Air Quality
             </span>
             <div
-              className={`text-xl sm:text-2xl font-bold font-sans tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] px-2 py-0.5 rounded border inline-block backdrop-blur-xs ${
-                categoryColors[airCategory]
-              }`}
+              className="text-lg sm:text-2xl font-wordmark font-bold px-2.5 py-0.5 rounded-lg border shadow-sm backdrop-blur-xs"
+              style={{
+                color: currentTheme.text,
+                backgroundColor: currentTheme.bg,
+                borderColor: currentTheme.border
+              }}
             >
               {categoryLabels[airCategory]}
             </div>
           </div>
 
-          {/* PM2.5 Monospace Segment Type Reading */}
+          {/* PM2.5 Reading in Small Monospace Segment Type */}
           <div className="flex flex-col items-end">
-            <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-400 drop-shadow">
+            <span className="text-[9px] font-body font-bold uppercase tracking-wider text-[#4A4854] drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
               PM 2.5
             </span>
-            <div className="flex items-baseline gap-1 bg-black/60 px-2 py-0.5 rounded border border-zinc-700/60 backdrop-blur-xs shadow-inner">
-              <span className="font-mono text-lg sm:text-2xl font-bold text-amber-400 tracking-tight">
+            <div className="flex items-baseline gap-1 bg-[#F6EFE2]/95 px-2.5 py-0.5 rounded-lg border border-[#CBBCA3] backdrop-blur-xs shadow-xs">
+              <span className="font-segment text-lg sm:text-2xl font-bold text-[#C8553D] tracking-tight">
                 {pm25 !== null ? pm25.toFixed(1) : '--.-'}
               </span>
-              <span className="font-mono text-[9px] text-zinc-400">
+              <span className="font-body text-[10px] text-[#5A5766] font-medium">
                 µg/m³
               </span>
             </div>

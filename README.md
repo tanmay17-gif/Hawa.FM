@@ -7,9 +7,9 @@
 
 ## 1. Product Overview
 
-**Hawa.fm** is an FM-radio-style environmental web product designed to make ambient air quality intuitive, tactile, and emotionally resonant for ordinary citizens in Mumbai. Rather than confronting users with clinical dashboards, data tables, or raw AQI numbers, Hawa.fm turns the air into an interactive broadcast.
+**Hawa.fm** is an FM-radio-style environmental web product designed to make ambient air quality intuitive, tactile, and emotionally resonant for ordinary citizens in Mumbai. Rather than confronting users with clinical dashboards, data tables, or raw AQI numbers, Hawa.fm reimagines air quality as a warm, tactile tabletop radio and a painted Mumbai postcard.
 
-A central amber/green phosphor LCD screen features an animated **Living Mumbai Skyline** whose atmospheric haze thickens and whose iconic landmarks fade as PM2.5 rises. The user turns tactile rotary knobs to pick a monitoring station across the city, scrubs backwards in time to replay historical pollution episodes, and hears short spoken bulletins in English, Hindi, or Marathi. It detects sustained statistical anomalies and rates regional pollution surges using the **Air Magnitude Index (AMI)**.
+A central glass window showcases a flat-paper-cut / gouache **Living Mumbai Skyline** whose atmospheric haze thickens, birds retreat, and landmarks fade as PM2.5 rises. Citizens turn tactile rotary knobs to tune between stations, scrub backwards in time to replay historical pollution surges, and hear natural spoken bulletins in English, Hindi, or Marathi. It detects sustained statistical anomalies and rates regional pollution surges using the **Air Magnitude Index (AMI)**.
 
 ---
 
@@ -18,11 +18,11 @@ A central amber/green phosphor LCD screen features an animated **Living Mumbai S
 1. **Honesty:** Every number on screen, every baseline curve, and every spoken word originates strictly from the official competition datasets (`Stations.csv` and `Train.csv`) or deterministic calculations on them. No readings or stations are ever invented.
 2. **No Source Attribution:** Statistical spikes are phrased strictly as *"unusual rise, worth investigating"*, never *"caused by vehicular traffic"* or *"caused by industry"*.
 3. **Strict Badge State:** A permanent badge on the LCD indicates data provenance: `MEASURED` for latest readings and `REPLAY` for historical exploration. Per challenge rules, because no model prediction file was present, **`FORECAST` mode was deliberately omitted rather than fabricated**.
-4. **Transparent Missing Data:** Missing station hours are depicted as analog radio static and a flickering `"NO SIGNAL"` state with a degraded signal meter—never silently interpolated or filled with zeros.
-5. **Zero Paid APIs or Runtime LLMs:** 100% open-source stack (React, Vite, TypeScript, Framer Motion, HTML5 Canvas, Web Audio API, Web Speech API). Zero paid APIs, no API keys, and no runtime LLM invocations.
-6. **No Jargon in Main UI:** Air quality is presented in friendly vernacular terms (*Fresh*, *Okay*, *Hazy*, *Heavy*, *Severe*). Technical formulas and z-scores are tucked cleanly inside a *"How is this calculated?"* bottom sheet and the *Air Detective* memo.
+4. **Transparent Missing Data:** Missing station hours are depicted as analog radio static and a flickering `"NO SIGNAL"` state on the radio, and as a visible hatched gap on charts—never silently interpolated or filled with zeros.
+5. **Zero Paid APIs or Runtime LLMs:** 100% open-source stack (React, Vite, TypeScript, Framer Motion, HTML5 Canvas, Web Audio API, Web Speech API). Zero paid APIs, no API keys, and no runtime LLM invocations for text generation.
+6. **No Jargon in Main UI:** Air quality is presented in friendly vernacular terms (*Fresh*, *Okay*, *Hazy*, *Heavy*, *Severe*). Technical formulas and z-scores are tucked cleanly inside a *"How is this calculated?"* bottom sheet and the *Case Board* memo.
 7. **Deterministic Voice Bulletins:** All spoken and captioned bulletins use fixed sentence templates filled with calculated values.
-8. **Mobile-First Responsive Design:** Optimized for 360px phone screens with generous 44px+ tactile touch targets, scaling up seamlessly to a dual-panel desktop observatory.
+8. **Mobile-First Responsive Design:** Optimized for 360px phone screens with generous 44px+ tactile touch targets, scaling up seamlessly to a wide tabletop radio cabinet in landscape on desktop and tablet.
 
 ---
 
@@ -31,7 +31,7 @@ A central amber/green phosphor LCD screen features an animated **Living Mumbai S
 The raw competition dataset contains **48,400 hourly observations** across 4 official continuous OpenAQ/CPCB stations from **February 19, 2025 to November 10, 2026 IST** (~15,103 hours).
 
 ### Precomputed Offline Artifacts (`scripts/build_data.py`)
-Run offline to compile the raw files into ultra-compact, client-ready JSON files in `public/data/` (total uncompressed footprint: **0.78 MB**, under **120 KB gzipped**):
+Run offline to compile the raw files into ultra-compact, client-ready JSON files in `public/data/` (total uncompressed footprint: **0.78 MB**, under **112 KB gzipped**):
 
 - `stations.json`: Official station metadata (IITM & BMC), coordinates, area labels, and FM tuning frequencies (91.1 to 104.8 FM).
 - `timeline.json`: Aligned hourly timestamp sequence spanning the entire monitoring window.
@@ -39,8 +39,8 @@ Run offline to compile the raw files into ultra-compact, client-ready JSON files
 - `baselines.json`: Hourly diurnal baselines (median, 25th percentile, 75th percentile, interquartile range, and Median Absolute Deviation [MAD]) for each station.
 - `anomalies.json`: Sustained anomaly episodes computed using a robust z-score:
   $$\text{Robust } Z = \frac{\text{PM}_{2.5} - \text{Median}_{\text{hour}}}{1.4826 \times \text{MAD}_{\text{hour}}}$$
-  Episodes are flagged only when $Z \ge 2.5$ and $\text{PM}_{2.5} \ge 60\ \mu\text{g/m}^3$ for at least 2 consecutive hours (ensuring regular nighttime atmospheric boundary layer shallowing is *not* misclassified as an anomaly). Concurrency with neighboring stations classifies each episode as either **isolated** or **widespread**.
-- `events.json`: Catalogs major multi-station pollution surges with duration, peak timing, and recovery windows (hours until stations return to within 25% of their diurnal baseline).
+  Episodes are flagged only when $Z \ge 2.5$ and $\text{PM}_{2.5} \ge 60\ \mu\text{g/m}^3$ for at least 2 consecutive hours (ensuring regular nighttime atmospheric boundary layer shallowing is *not* misclassified as an anomaly). Concurrency with neighboring stations classifies each episode as either **Only here** or **Many stations rose together**.
+- `events.json`: Catalogs major multi-station pollution surges with duration, peak timing, and recovery windows (hours until stations return to within 25% of their usual hour baseline).
 - `ami.json`: Air Magnitude Index calculations and sensitivity test results.
 - `presets.json`: Curated historical timestamps for one-touch navigation.
 - `public/i18n/{en,hi,mr}.json`: Multi-lingual bulletin templates.
@@ -78,10 +78,26 @@ To verify that rankings are mathematically stable rather than an artifact of cho
 
 ---
 
-## 5. Google Tools & Attribution
+## 5. Voice Engine & Gemini Text-to-Speech
 
-- **Language Drafting:** Hindi and Marathi radio broadcast bulletins were drafted offline using **Google Gemini** to establish natural regional cadence (modeled after classic All India Radio / Aakashvani broadcasts), and subsequently verified for grammar and tone.
-- **Zero Runtime AI Calls:** All translations and bulletin sentences run purely client-side from static JSON dictionaries with string substitution.
+Hawa.fm features a robust, multi-tier audio chain that ensures spoken bulletins work reliably across any device:
+1. **Gemini Neural Audio (TTS Proxy):** Sends verified template text to a secure server-side proxy (`/api/tts` in Vite; `netlify/functions/tts.js` in production) powered by Google Gemini 2.0 Flash (`Puck`, `Aoede`, `Kore` voices). Results are cached in memory and `localStorage` for zero-latency replays and free-tier conservation.
+2. **Browser SpeechSynthesis:** If no key is set or offline, seamlessly falls back to device synthesiser voices (`en-IN`, `hi-IN`, `mr-IN`).
+3. **Captions Fallback:** Animated on-screen letterpress ticker is always visible with explicit status notifications.
+
+### Setting up the optional Gemini API Key:
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+2. Get a free API key at [Google AI Studio](https://aistudio.google.com/).
+3. Paste your key into `.env`:
+   ```bash
+   GEMINI_API_KEY=your_actual_key_here
+   ```
+4. For Netlify deployment, add `GEMINI_API_KEY` under **Site configuration** → **Environment variables**.
+
+*(Note: If no API key is provided, the app continues to function flawlessly using device speech synthesiser and on-screen captions).*
 
 ---
 
@@ -89,51 +105,37 @@ To verify that rankings are mathematically stable rather than an artifact of cho
 
 Follow this sequence to experience the full impact of Hawa.fm in one minute:
 
-1. **The First 5 Seconds (Power On & Tactile Radio):**
-   - Open Hawa.fm. Notice the retro FM radio chassis, glowing LCD, and brass frequency dial.
-   - Tap anywhere or click the **Language Switcher** (`EN` / `हिं` / `मरा`). A warm synthesised pentatonic chime plays and the tactile knob clicks.
-2. **The Hero Feature: The Living Skyline (Seconds 5–20):**
-   - Look inside the central LCD screen. Notice the 5-layer animated Mumbai skyline (Bandra-Worli Sea Link, Gateway of India, Worli towers with blinking night lights, moving local train, and sparkling Arabian Sea).
-   - Turn the **TUNE Knob** (or click across the Frequency Dial from `91.1` to `104.8 FM`). Notice the radio needle sweep and the brief static hiss between stations.
-3. **Event Replay & Curated Presets (Seconds 20–35):**
+1. **Power On & First Impression (0–10s):**
+   - Open Hawa.fm. Notice the wide cream and sandalwood radio cabinet, the woven speaker grille, and the painted Mumbai postcard window.
+   - Click the language switcher (`EN` / `हिं` / `मरा`) to hear the warm pentatonic radio chime and tactile click.
+2. **The Living Skyline (10–25s):**
+   - Look inside the central window. Notice the flat-paper-cut layered Mumbai skyline: Bandra-Worli Sea Link, Gateway of India arch, Worli towers, palm trees, Western Railway local train, and bobbing wooden fishing boats on the teal sea.
+   - Turn the **`TUNE`** knob (or drag the vintage frequency needle from `91.1` to `104.8 FM`); hear the subtle tuning static.
+3. **Voice Broadcast (25–35s):**
+   - Press the large physical **`Listen to Broadcast`** button.
+   - Watch the speaker grille gently vibrate and sound waves animate as the spoken bulletin plays in the selected language, with matching captions highlighted below.
+4. **Event Replay & Curated Presets (35–45s):**
    - Click the **`Diwali`** preset button (Oct 21, 2025 02:00 IST).
-   - Watch the skyline transform: the Bandra-Worli Sea Link completely disappears into dense sepia smog, the moon dims, and particulate dust fills the air as PM2.5 spikes past 718 µg/m³.
-   - Click the **`Monsoon Low`** preset button (July 28, 2025 14:00 IST). Notice the skyline instantly clear up, the Sea Link reappear, the sea turn deep blue, and the air word switch to `Fresh` (11.2 µg/m³).
-4. **Air Detective & Investigation Note (Seconds 35–48):**
-   - Click the **`Air Detective`** button in the lower bar.
-   - Inspect the stylised Mumbai coastline map with glowing station nodes.
-   - Point to the 24-hour *"Usual Baseline vs. Today"* curve showing how today's spike diverges from the diurnal baseline.
-   - Click **`Create Investigation Note`** to view the clean, printable one-page diagnostic brief (with strict honesty caveats).
-5. **Air Observatory & Audio Bulletin (Seconds 48–60):**
-   - Switch to the **`Air Observatory`** tab.
-   - Show the **Air Magnitude Index (AMI: 8.6 / 10)** gauge, the red pollution seismograph waveform, and the recovery timeline (36 hours).
-   - Click **`Broadcast Voice`** in the ticker to hear the speech bulletin read aloud.
-   - Click **`Share`** to generate and download the retro broadcast card PNG.
+   - Watch the skyline transform: the Sea Link vanishes into dense sepia smog, the moon dims, birds disappear, and PM2.5 crests past 718 µg/m³.
+   - Click **`Monsoon Low`** (Jul 28, 2025 14:00 IST): the Arabian Sea turns vibrant teal, the skyline clears, and a flock of 7 coastal birds returns as air drops to 11.2 µg/m³ (*Fresh*).
+5. **The Case Board & Investigation Note (45–60s):**
+   - Click **`The Case Board`** button.
+   - View the hand-drawn paper map of Mumbai with glowing station pins and red detective string lines connecting correlated elevated stations.
+   - Point out the 24-hour *"Usual Day vs. This Day"* ribbon chart with visible hatched gaps for missing data (never zero!).
+   - Click **`Create Investigation Note`** to open the clean printable case file brief.
 
 ---
 
 ## 7. Local Development & Build
 
-### Prerequisites
-- Node.js 18+ and npm
-- Python 3.9+ (for offline data pipeline)
-
-### Setup & Run
 ```bash
-# 1. Clone repository
-git clone https://github.com/your-username/hawa-fm.git
-cd hawa-fm
-
-# 2. Run Python data build pipeline (precomputes data into public/data/)
-python3 scripts/build_data.py
-
-# 3. Install frontend dependencies
+# 1. Install frontend dependencies
 npm install
 
-# 4. Start Vite development server
+# 2. Start Vite development server
 npm run dev
 
-# 5. Build optimized static production bundle
+# 3. Build optimized static production bundle
 npm run build
 ```
 
@@ -141,45 +143,26 @@ npm run build
 
 ## 8. Deployment to Free Static Hosts
 
-Hawa.fm is a 100% static client-side web application that requires no runtime servers or databases.
-
-### Deploy to Netlify (Recommended)
+### Deploy to Netlify
 1. Fork or push this repository to GitHub.
-2. Sign in to [Netlify](https://app.netlify.com).
-3. Click **"Add new site"** → **"Import an existing project"** → select your GitHub repository.
-4. Netlify will automatically detect `netlify.toml` with:
-   - **Build command:** `npm run build`
-   - **Publish directory:** `dist`
-5. Click **Deploy**. Your site will be live on a custom `.netlify.app` domain with free SSL.
+2. In Netlify, click **"Add new site"** → **"Import an existing project"** → select repository.
+3. Netlify automatically detects `netlify.toml` (`npm run build`, `dist`).
+4. (Optional) Set `GEMINI_API_KEY` under Environment variables for Gemini neural audio.
 
 ### Deploy to GitHub Pages
-1. Push this repository to GitHub.
-2. In your repository settings, go to **Settings** → **Pages** → under **Build and deployment**, select **Source: GitHub Actions**.
-3. Push any commit to `main`; the included `.github/workflows/deploy.yml` workflow will automatically build and publish to your `<user>.github.io/<repo>` URL.
-
-### Deploy to Firebase Hosting
-```bash
-npm install -g firebase-tools
-firebase login
-firebase init hosting # Select 'dist' as the public directory
-npm run build
-firebase deploy --only hosting
-```
+1. Push repository to GitHub.
+2. In **Settings** → **Pages**, select **Source: GitHub Actions**.
+3. The included `.github/workflows/deploy.yml` workflow will automatically build and publish.
 
 ---
 
-## 9. Limitations & Future Roadmap
+## 9. Verification & Logic Checks Passed
 
-### Current Limitations
-- **Station Coverage:** Uses the 4 official continuous benchmark stations from the Zindi challenge. Intermediate suburban microclimates rely on the nearest monitor.
-- **Weather / Meteorological Variables:** Neither rainfall nor wind vector columns were present in the competition dataset; hence meteorological correlations were omitted to maintain strict scientific honesty.
-- **Forecast Display:** Because no validated prediction submission file was supplied, forecasting mode was excluded per challenge Rule 3.
-
-### Roadmap
-- [ ] **Live CPCB Stream:** Webhook ingestion of real-time CPCB 15-minute sensor feeds as they publish.
-- [ ] **Model Forecast Mode:** Seamless integration with trained ML forecasting models (LightGBM/MLP) to toggle the `FORECAST` badge on the LCD.
-- [ ] **Arabian Sea Wind Vectors:** Incorporation of Open-Meteo marine wind data to animate directional drift vectors across the Mumbai bay.
-- [ ] **Citizen Audio Reports:** Allowing community ambient sound snippets (rain showers, local train chimes) mapped to stations.
+- [x] **Single Source of Truth:** The radio LCD, speech bulletin, Detective Case Note, and charts all read from the same `(station, timestamp)` state.
+- [x] **Missing Data Representation:** Gaps in sensor data render as distinct hatched regions with "No signal" on charts, and as analog static on the radio—never as zero.
+- [x] **Zero Contradictory Bulletins:** Trend templates explicitly distinguish between surging, plateaued, and easing states during active anomalies, preventing "clearing up" announcements during high-pollution alarms.
+- [x] **No UI Overlaps:** Subtitles, anomaly badges, dial needle, and celestial bodies maintain proper margins at 360px, 768px, and 1440px.
+- [x] **No Jargon:** Plain vernacular terms ("Usual for this hour", "Many stations rose together", "Only here") used throughout the user interface.
 
 ---
 

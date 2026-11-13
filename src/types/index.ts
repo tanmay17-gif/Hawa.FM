@@ -115,3 +115,4 @@ export interface PresetMoment {
 export type AirCategory = 'fresh' | 'okay' | 'hazy' | 'heavy' | 'severe';
 export type Language = 'en' | 'hi' | 'mr';
 export type ModeBadge = 'MEASURED' | 'REPLAY';
+

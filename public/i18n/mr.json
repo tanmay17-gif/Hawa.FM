@@ -14,6 +14,9 @@
     "trend_rising": "वाढत",
     "trend_falling": "सुधारत",
     "trend_steady": "स्थिर",
+    "trend_rising_anomaly": "वेगाने वाढत",
+    "trend_easing_anomaly": "शिखरावरून किंचित कमी पण अजूनही अनपेक्षित जास्त",
+    "trend_steady_anomaly": "असामान्य पातळीवर स्थिर",
     "baseline_above": "जास्त",
     "baseline_below": "कमी",
     "baseline_near": "जवळपास",
@@ -22,16 +25,20 @@
   "ui": {
     "tune_knob": "स्टेशन ट्यून",
     "time_knob": "वेळ प्रवास",
+    "listen": "ऐका",
     "play": "सुरू करा",
     "pause": "थांबवा",
     "live": "मापन डेटा",
     "replay": "इव्हेंट रीप्ले",
     "no_signal": "सिग्नल नाही",
     "anomaly_badge": "अनपेक्षित वाढ",
-    "detective_tab": "हवा शोधक",
+    "detective_tab": "केस बोर्ड",
     "observatory_tab": "हवा वेधशाळा",
     "share": "कार्ड शेअर करा",
     "about": "हवा.एफएम विषयी",
-    "explanation": "हे कसे मोजले जाते?"
+    "explanation": "हे कसे मोजले जाते?",
+    "scope_widespread": "अनेक केंद्रांवर एकत्र वाढ",
+    "scope_isolated": "केवळ येथे",
+    "baseline_label": "या वेळेचे सामान्य प्रमाण"
   }
 }
