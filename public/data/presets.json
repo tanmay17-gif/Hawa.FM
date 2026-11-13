@@ -1,26 +1,38 @@
 [
   {
     "id": "diwali",
-    "label": "Diwali",
-    "fullTitle": "Diwali Festival Night (21 Oct 2025)",
+    "label": "Diwali Spike",
+    "fullTitle": "Diwali Festival Spike (21 Oct 2025)",
     "timestamp": "2025-10-21T02:00",
     "stationId": "11611",
-    "description": "Citywide holiday spike with sharp multi-station crest."
-  },
-  {
-    "id": "monsoon",
-    "label": "Monsoon Low",
-    "fullTitle": "Monsoon Clean Breeze (28 Jul 2025)",
-    "timestamp": "2025-07-28T14:00",
-    "stationId": "11606",
-    "description": "Pristine Arabian Sea westerly flow washing the city clear."
+    "eventId": "event_16",
+    "description": "Citywide holiday fireworks surge with severe multi-station crest."
   },
   {
     "id": "winter",
-    "label": "Worst Day",
-    "fullTitle": "Severe Winter Inversion (17 Dec 2025)",
-    "timestamp": "2025-12-17T21:00",
+    "label": "Winter Inversion",
+    "fullTitle": "Severe Winter Inversion (04 Dec 2025)",
+    "timestamp": "2025-12-04T05:00",
     "stationId": "3409511",
-    "description": "Trapped cool winter air layer causing regional accumulation."
+    "eventId": "event_28",
+    "description": "Trapped cool winter air layer causing intense regional accumulation."
+  },
+  {
+    "id": "autumn",
+    "label": "Autumn Surge",
+    "fullTitle": "Late Autumn Accumulation (28 Nov 2025)",
+    "timestamp": "2025-11-28T00:00",
+    "stationId": "11611",
+    "eventId": "event_23",
+    "description": "Prolonged calm-wind stagnant smog episode across Mumbai."
+  },
+  {
+    "id": "monsoon",
+    "label": "Monsoon Clean",
+    "fullTitle": "Monsoon Clean Air Baseline (28 Jul 2025)",
+    "timestamp": "2025-07-28T12:00",
+    "stationId": "11606",
+    "eventId": "event_monsoon_clean",
+    "description": "Pristine Arabian Sea westerly maritime flow washing the city clear."
   }
 ]

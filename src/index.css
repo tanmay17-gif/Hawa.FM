@@ -1,101 +1,286 @@
 @import "tailwindcss";
 
+/* ─── HAWA.fm Design Tokens ───────────────────────────────────────────── */
 :root {
-  --cream: #F6EFE2;
-  --warm-paper: #EFE4CF;
-  --cabinet-wood: #E5D7BF;
-  --cabinet-border: #CBBCA3;
-  --cabinet-shadow: rgba(43, 42, 51, 0.12);
-  --terracotta: #C8553D;
-  --marigold: #E9A23B;
-  --sea-teal: #2F7F86;
-  --deep-ink: #2B2A33;
-  --sage: #8BA888;
-  --brass-accent: #B38638;
+  --warm-ivory:       #F4EDDF;
+  --soft-cream:       #E8DDC9;
+  --muted-sage:       #AEB49A;
+  --deep-forest-teal: #355C53;
+  --muted-terracotta: #B66C4D;
+  --charcoal:         #343B35;
+  --light-grey-green: #E4E7DC;
+  
+  /* Aliases for convenience */
+  --cream:      var(--warm-ivory);
+  --paper:      var(--soft-cream);
+  --sage:       var(--muted-sage);
+  --teal:       var(--deep-forest-teal);
+  --terracotta: var(--muted-terracotta);
+  --ink:        var(--charcoal);
+  --olive:      #263328;
 }
 
-body {
+/* ─── Base ────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
   margin: 0;
   padding: 0;
-  background-color: #EFE6D6;
-  color: var(--deep-ink);
+  width: 100%;
+  min-height: 100%;
+  background-color: var(--warm-ivory);
+  color: var(--charcoal);
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
-/* Authentic gouache / handmade watercolor paper texture */
-.paper-texture {
-  background-color: var(--cream);
-  background-image: radial-gradient(#2B2A33 0.75px, transparent 0.75px), radial-gradient(#2B2A33 0.75px, #F6EFE2 0.75px);
-  background-size: 30px 30px;
-  background-position: 0 0, 15px 15px;
-  background-opacity: 0.03;
+#root {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Woven vintage radio fabric speaker grille */
-.speaker-grille {
-  background: 
-    repeating-linear-gradient(45deg, #d3c4a9, #d3c4a9 2px, #e8dbc4 2px, #e8dbc4 5px),
-    repeating-linear-gradient(-45deg, #c5b497, #c5b497 2px, #dfd0b7 2px, #dfd0b7 5px);
-  box-shadow: inset 0 2px 6px rgba(43, 42, 51, 0.15), 0 1px 2px rgba(255, 255, 255, 0.5);
+/* On desktop, keep fixed single-viewport frame when space permits */
+@media (min-width: 768px) and (min-height: 700px) {
+  html, body, #root {
+    height: 100%;
+    overflow: hidden;
+  }
 }
 
-/* Tactile push button bevel */
-.push-button {
-  background: linear-gradient(to bottom, #F9F4EB 0%, #EFE4CF 100%);
-  border: 1px solid #D5C7B0;
-  box-shadow: 0 2px 4px rgba(43, 42, 51, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.8);
-  transition: all 0.12s ease-out;
-}
-.push-button:hover {
-  background: linear-gradient(to bottom, #FFFBF5 0%, #F4EBD7 100%);
-}
-.push-button:active {
-  transform: translateY(1px);
-  box-shadow: inset 0 2px 4px rgba(43, 42, 51, 0.15);
+/* Faint dot texture on page background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(52, 59, 53, 0.08) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
-/* Expressive serif wordmark */
-.font-wordmark {
-  font-family: 'Fraunces', serif;
-  font-variation-settings: 'opsz' 72, 'wght' 700, 'SOFT' 100;
+/* ─── Typography ──────────────────────────────────────────────────────── */
+.font-brand, .font-wordmark {
+  font-family: 'Fraunces', Georgia, serif;
+  font-variation-settings: 'opsz' 72, 'wght' 700;
 }
-
-/* Humanist body sans */
-.font-body {
-  font-family: 'DM Sans', sans-serif;
+.font-sans, .font-body {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
-
-/* Devanagari regional font */
-.font-devanagari {
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+.font-deva {
   font-family: 'Noto Sans Devanagari', 'DM Sans', sans-serif;
 }
 
-/* Clean paper card shadow */
-.paper-card {
-  background: #FCF9F3;
-  border: 1px solid #E2D5BE;
-  box-shadow: 0 4px 14px rgba(43, 42, 51, 0.06);
+/* ─── Physical Radio Hardware Shell ───────────────────────────────────── */
+.radio-shell {
+  background: var(--muted-sage);
+  background-image: 
+    radial-gradient(ellipse at 50% 0%, rgba(244, 237, 223, 0.25) 0%, transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  border: 3.5px solid #283329;
+  box-shadow: 
+    inset 0 0 0 2px rgba(244, 237, 223, 0.4),
+    0 16px 40px rgba(52, 59, 53, 0.22),
+    0 4px 12px rgba(52, 59, 53, 0.14);
+  border-radius: 28px;
+  position: relative;
 }
 
-/* Subtle speaker grille gentle vibration keyframe */
-@keyframes speakerVibrate {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.008); }
+/* ─── Speaker Grille ──────────────────────────────────────────────────── */
+.speaker-grille-box {
+  background: var(--soft-cream);
+  border: 2px solid rgba(52, 59, 53, 0.25);
+  box-shadow: inset 0 2px 6px rgba(52, 59, 53, 0.12);
+  border-radius: 12px;
 }
 
-.speaker-speaking {
-  animation: speakerVibrate 0.35s ease-in-out infinite;
+.speaker-waves {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 5px,
+    rgba(52, 59, 53, 0.18) 5px,
+    rgba(52, 59, 53, 0.18) 7px
+  );
 }
 
-/* Respect reduced motion */
+@keyframes grille-subtle-pulse {
+  0%, 100% { transform: scaleY(1); opacity: 0.95; }
+  50% { transform: scaleY(1.01); opacity: 1; }
+}
+.speaking .speaker-waves {
+  animation: grille-subtle-pulse 0.4s ease-in-out infinite;
+}
+
+/* ─── Dedicated Single LCD Bezel & Screen ─────────────────────────────── */
+.lcd-container {
+  background: var(--warm-ivory);
+  border: 3px solid #283329;
+  box-shadow: 
+    inset 0 0 0 2px rgba(244, 237, 223, 0.8),
+    inset 0 3px 10px rgba(52, 59, 53, 0.12),
+    0 2px 6px rgba(52, 59, 53, 0.08);
+  border-radius: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Inner thin bezel ring */
+.lcd-container::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  z-index: 1;
+  border: 1px solid rgba(52, 59, 53, 0.12);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+/* Static tuning burst overlay during mode switch */
+@keyframes static-burst {
+  0%   { opacity: 0; }
+  15%  { opacity: 0.65; }
+  35%  { opacity: 0.25; }
+  60%  { opacity: 0.5; }
+  85%  { opacity: 0.15; }
+  100% { opacity: 0; }
+}
+
+.lcd-static-overlay {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 80px 80px;
+  opacity: 0;
+  animation: static-burst 0.38s ease-out forwards;
+  mix-blend-mode: overlay;
+  border-radius: inherit;
+}
+
+/* ─── Physical Mode Buttons on Right ─────────────────────────────────── */
+.radio-mode-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: linear-gradient(to bottom, #FAF6EE 0%, #E8DDC9 100%);
+  border: 1.5px solid rgba(52, 59, 53, 0.3);
+  box-shadow: 
+    0 2px 5px rgba(52, 59, 53, 0.12),
+    inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  color: var(--charcoal);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.12s ease-out;
+}
+
+@media (min-width: 768px) {
+  .radio-mode-button {
+    min-height: 44px;
+    padding: 8px 14px;
+  }
+}
+
+.radio-mode-button:hover:not(.active) {
+  background: linear-gradient(to bottom, #FFFFFF 0%, #EFE5D4 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 7px rgba(52, 59, 53, 0.16);
+}
+
+.radio-mode-button:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(52, 59, 53, 0.2);
+}
+
+.radio-mode-button.active {
+  background: var(--muted-terracotta);
+  color: #FFFFFF;
+  border-color: #8C472E;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.25),
+    0 1px 2px rgba(52, 59, 53, 0.15);
+}
+
+.radio-mode-button .active-indicator-pill {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+  flex-shrink: 0;
+}
+
+.radio-mode-button:not(.active) .active-indicator-pill {
+  display: none;
+}
+
+/* ─── Elongated Curved Lower Controls (Volume & Tuning) ──────────────── */
+.lower-control-track {
+  background: var(--soft-cream);
+  border: 1.5px solid rgba(52, 59, 53, 0.25);
+  border-radius: 9999px;
+  box-shadow: inset 0 2px 5px rgba(52, 59, 53, 0.12);
+  position: relative;
+}
+
+/* ─── Animated Audio Waveform Bars ───────────────────────────────────── */
+@keyframes wave-bounce {
+  0%, 100% { height: 4px; }
+  50%      { height: 18px; }
+}
+
+.wave-bar {
+  width: 3px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--muted-terracotta);
+  transition: height 0.15s ease-out;
+}
+
+.wave-bar.playing {
+  animation: wave-bounce 0.45s ease-in-out infinite;
+}
+.wave-bar.playing:nth-child(2) { animation-delay: 0.08s; }
+.wave-bar.playing:nth-child(3) { animation-delay: 0.16s; }
+.wave-bar.playing:nth-child(4) { animation-delay: 0.24s; }
+.wave-bar.playing:nth-child(5) { animation-delay: 0.12s; }
+.wave-bar.playing:nth-child(6) { animation-delay: 0.20s; }
+
+/* ─── Upper Right Thin Antenna ────────────────────────────────────────── */
+@keyframes antenna-vibrate {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(1.2deg); }
+  75%      { transform: rotate(-1deg); }
+}
+
+.speaking .radio-antenna-mast {
+  animation: antenna-vibrate 0.45s ease-in-out infinite;
+}
+
+/* ─── Reduced Motion ─────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
   }
 }

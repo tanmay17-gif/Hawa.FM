@@ -15,15 +15,12 @@ export const FrequencyDial: React.FC<FrequencyDialProps> = ({
 }) => {
   const dialRef = useRef<HTMLDivElement | null>(null);
 
-  // Dial frequency bounds
   const minFreq = 89.0;
   const maxFreq = 107.0;
   const freqRange = maxFreq - minFreq;
 
   const currentStation = stations.find(s => s.id === currentStationId) || stations[0];
   const targetFreq = currentStation ? currentStation.frequency : 95.0;
-
-  // Percentage position of needle
   const needlePct = Math.max(0, Math.min(100, ((targetFreq - minFreq) / freqRange) * 100));
 
   const handleDialClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -33,7 +30,6 @@ export const FrequencyDial: React.FC<FrequencyDialProps> = ({
     const clickRatio = Math.max(0, Math.min(1, clickX / rect.width));
     const clickedFreq = minFreq + clickRatio * freqRange;
 
-    // Find closest station
     let closestStation = stations[0];
     let closestDist = Math.abs(stations[0].frequency - clickedFreq);
 
@@ -46,7 +42,7 @@ export const FrequencyDial: React.FC<FrequencyDialProps> = ({
     }
 
     if (closestStation.id !== currentStationId) {
-      radioAudio.playStaticBurst(0.16, 0.08);
+      radioAudio.playStaticBurst(0.14, 0.06);
       radioAudio.playKnobClick();
       onSelectStation(closestStation.id);
     }
@@ -54,22 +50,16 @@ export const FrequencyDial: React.FC<FrequencyDialProps> = ({
 
   return (
     <div className="w-full select-none font-body">
-      {/* Outer Dial Plate: Vintage Warm Sandpaper Inset */}
+      {/* Dial Strip Container */}
       <div
         ref={dialRef}
         onClick={handleDialClick}
-        className="relative h-15 w-full rounded-lg cursor-pointer border border-[#CBBCA3] shadow-[inset_0_2px_4px_rgba(43,42,51,0.08),0_1px_2px_rgba(255,255,255,0.7)] overflow-hidden"
-        style={{
-          background: 'linear-gradient(to bottom, #EFE4CF 0%, #F6EFE2 50%, #E8DCC3 100%)'
-        }}
+        className="relative h-9 sm:h-10 w-full rounded-md cursor-pointer border border-[#2D3B34]/30 shadow-inner overflow-hidden bg-[#EDE5D4]"
         role="group"
-        aria-label="Tuning Frequency Dial"
+        aria-label="Radio Frequency Dial Strip"
       >
-        {/* Subtle glass reflection */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-black/5 pointer-events-none" />
-
-        {/* Vintage Dial Frequency Numbers */}
-        <div className="absolute inset-x-3 top-1 flex justify-between pointer-events-none text-[10px] font-bold text-[#4A4854] font-body">
+        {/* Frequency Numbers */}
+        <div className="absolute inset-x-2 top-0.5 flex justify-between pointer-events-none text-[8px] sm:text-[9px] font-bold text-[#5A6B60]">
           <span>89</span>
           <span>92</span>
           <span>95</span>
@@ -79,26 +69,22 @@ export const FrequencyDial: React.FC<FrequencyDialProps> = ({
           <span>107</span>
         </div>
 
-        {/* Major & Minor Frequency Tick marks */}
-        <div className="absolute inset-x-3 top-5 h-2.5 flex justify-between items-end pointer-events-none opacity-80">
-          {Array.from({ length: 37 }).map((_, i) => {
-            const isMajor = i % 6 === 0;
-            const isMid = i % 3 === 0;
-            return (
-              <div
-                key={i}
-                className="w-0.5 rounded-xs"
-                style={{
-                  height: isMajor ? '11px' : isMid ? '7px' : '4px',
-                  backgroundColor: isMajor ? '#C8553D' : '#8C7428'
-                }}
-              />
-            );
-          })}
+        {/* Frequency Ticks */}
+        <div className="absolute inset-x-2 top-3 h-2 flex justify-between items-end pointer-events-none opacity-60">
+          {Array.from({ length: 37 }).map((_, i) => (
+            <div
+              key={i}
+              className="w-0.5"
+              style={{
+                height: i % 6 === 0 ? '8px' : i % 3 === 0 ? '5px' : '3px',
+                backgroundColor: i % 6 === 0 ? '#A85C44' : '#2D3B34'
+              }}
+            />
+          ))}
         </div>
 
-        {/* Station Markers along the Dial Face (z-20 in front of needle, letterpress badges) */}
-        <div className="absolute inset-x-4 bottom-1 h-5 pointer-events-none z-20 flex justify-between">
+        {/* Station Markers along Dial */}
+        <div className="absolute inset-x-3 bottom-0.5 h-4 pointer-events-none z-20 flex justify-between">
           {stations.map(st => {
             const pos = ((st.frequency - minFreq) / freqRange) * 100;
             const isSelected = st.id === currentStationId;
@@ -108,36 +94,26 @@ export const FrequencyDial: React.FC<FrequencyDialProps> = ({
                 className="absolute -translate-x-1/2 flex flex-col items-center"
                 style={{ left: `${pos}%` }}
               >
-                <div
-                  className={`text-[9px] font-bold tracking-tight px-1.5 py-0.5 rounded-sm transition-all shadow-xs ${
+                <span
+                  className={`text-[8px] font-bold px-1 py-0.2 rounded-xs transition-all ${
                     isSelected
-                      ? 'bg-[#C8553D] text-[#F6EFE2] font-extrabold shadow-sm scale-105'
-                      : 'bg-[#E5D7BF] text-[#2B2A33] border border-[#CBBCA3]'
+                      ? 'bg-[#A85C44] text-white shadow-xs font-extrabold'
+                      : 'bg-[#F3EBDD]/90 text-[#2D3B34] border border-[#2D3B34]/20'
                   }`}
                 >
-                  {st.name.replace(', Mumbai', '').split(' ')[0]}
-                </div>
+                  {st.name.split(' ')[0]}
+                </span>
               </div>
             );
           })}
         </div>
 
-        {/* Backlit Glow behind active needle */}
+        {/* Moving Needle */}
         <div
-          className="absolute top-0 bottom-0 w-8 -translate-x-1/2 pointer-events-none transition-all duration-300 ease-out"
-          style={{
-            left: `${needlePct}%`,
-            background: 'radial-gradient(ellipse at center, rgba(233,162,59,0.35) 0%, transparent 70%)'
-          }}
-        />
-
-        {/* Moving Vintage Terracotta Tuning Needle (z-10, travels behind badges) */}
-        <div
-          className="absolute top-0 bottom-6 w-1 -translate-x-1/2 pointer-events-none transition-all duration-300 ease-out z-10"
+          className="absolute top-0 bottom-0 w-0.5 -translate-x-1/2 pointer-events-none transition-all duration-300 ease-out z-10 bg-[#A85C44]"
           style={{ left: `${needlePct}%` }}
         >
-          <div className="w-full h-full bg-[#C8553D] shadow-[0_0_4px_rgba(200,85,61,0.6)]" />
-          <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-2.5 h-1.5 bg-[#B38638] rounded-xs shadow-xs" />
+          <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-2 h-1 bg-[#8A3E28] rounded-xs" />
         </div>
       </div>
     </div>

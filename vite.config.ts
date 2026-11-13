@@ -71,7 +71,20 @@ function geminiTtsPlugin(resolvedKey: string) {
           }
 
           try {
-            const { text, voice = 'Puck' } = JSON.parse(body || '{}');
+            const { text, language = 'en', voice = 'Puck' } = JSON.parse(body || '{}');
+
+            let presenterPrompt = `Please read aloud this radio bulletin with a natural, warm, measured announcer cadence: "${text}"`;
+            let selectedVoice = voice || 'Puck';
+
+            if (language === 'hi') {
+              selectedVoice = 'Aoede';
+              presenterPrompt = `आप HAWA.fm मुंबई के एक पेशेवर, सहज और शांत रेडियो समाचार उद्घोषक हैं। शुद्ध और स्वाभाविक हिंदी उच्चारण, उचित ठहराव और समाचार वाचक के अंदाज़ में यह बुलेटिन पढ़ें: "${text}"`;
+            } else if (language === 'mr') {
+              selectedVoice = 'Aoede';
+              presenterPrompt = `तुम्ही HAWA.fm मुंबईचे एक व्यावसायिक, शांत आणि अनुभवी मराठी रेडिओ उद्घोषक आहात. शुद्ध, स्पष्ट आणि अस्खलित मराठी भाषेत ही बातमी वाचा. इंग्रजीत बोलू नका, फक्त मराठीतच बोला: "${text}"`;
+            } else {
+              presenterPrompt = `You are a professional, warm, articulate Indian radio news presenter on HAWA.fm in Mumbai broadcasting an atmospheric news bulletin. Speak with a natural, clear Indian English accent, measured pacing, subtle pauses at commas and full stops, and a calm, reassuring tone. Read aloud this broadcast bulletin: "${text}"`;
+            }
 
             // Use verified working Gemini TTS model
             const geminiRes = await fetch(
@@ -80,13 +93,13 @@ function geminiTtsPlugin(resolvedKey: string) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  contents: [{ parts: [{ text: `Please read aloud this radio bulletin with a natural, warm, measured announcer cadence: "${text}"` }] }],
+                  contents: [{ parts: [{ text: presenterPrompt }] }],
                   generationConfig: {
                     responseModalities: ['AUDIO'],
                     speechConfig: {
                       voiceConfig: {
                         prebuiltVoiceConfig: {
-                          voiceName: voice
+                          voiceName: selectedVoice
                         }
                       }
                     }

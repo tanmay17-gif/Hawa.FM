@@ -22,8 +22,8 @@ export const RotaryKnob: React.FC<RotaryKnobProps> = ({
   max,
   step = 1,
   onChange,
-  ticks = 12,
-  size = 72,
+  ticks = 10,
+  size = 52,
   ariaLabel
 }) => {
   const knobRef = useRef<HTMLDivElement | null>(null);
@@ -32,7 +32,6 @@ export const RotaryKnob: React.FC<RotaryKnobProps> = ({
   const startValRef = useRef<number>(value);
   const lastClickValRef = useRef<number>(value);
 
-  // Map value to angle (-135 deg to +135 deg)
   const range = max - min || 1;
   const normalized = Math.max(0, Math.min(1, (value - min) / range));
   const currentRotation = -135 + normalized * 270;
@@ -93,12 +92,6 @@ export const RotaryKnob: React.FC<RotaryKnobProps> = ({
     } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
       e.preventDefault();
       nextVal = Math.max(min, value - step);
-    } else if (e.key === 'PageUp') {
-      e.preventDefault();
-      nextVal = Math.min(max, value + step * 5);
-    } else if (e.key === 'PageDown') {
-      e.preventDefault();
-      nextVal = Math.max(min, value - step * 5);
     }
 
     if (nextVal !== value) {
@@ -109,27 +102,23 @@ export const RotaryKnob: React.FC<RotaryKnobProps> = ({
 
   return (
     <div className="flex flex-col items-center select-none font-body">
-      {/* Knob Dial Assembly */}
-      <div className="relative p-1.5 flex items-center justify-center">
-        {/* Outer Bezel with warm sandalwood & cream finish */}
+      {/* Knob assembly with bezel */}
+      <div className="relative flex items-center justify-center p-1">
+        {/* Outer Bezel */}
         <div
-          className="relative rounded-full flex items-center justify-center shadow-md border border-[#CBBCA3]"
-          style={{
-            width: size + 16,
-            height: size + 16,
-            background: 'radial-gradient(circle at 40% 30%, #F6EFE2 0%, #E7D8BF 75%, #D4C3A7 100%)',
-            boxShadow: '0 3px 6px rgba(43,42,51,0.08), inset 0 1px 2px rgba(255,255,255,0.8)'
-          }}
+          className="relative rounded-full flex items-center justify-center border border-[#2D3B34]/30 shadow-xs bg-[#EDE5D4]"
+          style={{ width: size + 12, height: size + 12 }}
         >
-          {/* Tick marks around perimeter */}
+          {/* Perimeter tick marks */}
           <div className="absolute inset-0 pointer-events-none">
             {Array.from({ length: ticks }).map((_, i) => {
               const tickAngle = -135 + (i / (ticks - 1)) * 270;
               return (
                 <div
                   key={i}
-                  className="absolute w-0.5 h-1.5 bg-[#8C7428]/60 left-1/2 top-1 origin-[50%_40px]"
+                  className="absolute w-0.5 h-1 bg-[#2D3B34]/40 left-1/2 top-0.5"
                   style={{
+                    transformOrigin: `50% ${(size + 12) / 2}px`,
                     transform: `translateX(-50%) rotate(${tickAngle}deg)`
                   }}
                 />
@@ -137,7 +126,7 @@ export const RotaryKnob: React.FC<RotaryKnobProps> = ({
             })}
           </div>
 
-          {/* Interactive Rotating Chunky Knob Body */}
+          {/* Interactive Rotating Knob */}
           <div
             ref={knobRef}
             tabIndex={0}
@@ -151,46 +140,28 @@ export const RotaryKnob: React.FC<RotaryKnobProps> = ({
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
             onKeyDown={handleKeyDown}
-            className="relative rounded-full cursor-grab active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-[#C8553D] transition-shadow border border-[#B8A88E]"
+            className="knob-cap rounded-full flex items-center justify-center cursor-grab active:cursor-grabbing focus:outline-none focus:ring-1 focus:ring-[#A85C44]"
             style={{
               width: size,
               height: size,
-              background: 'radial-gradient(circle at 35% 30%, #FFFFFF 0%, #EFE4CF 60%, #DFCDB0 100%)',
-              boxShadow: isDragging
-                ? '0 0 10px rgba(200,85,61,0.3), inset 0 1px 2px rgba(255,255,255,0.9)'
-                : '0 3px 6px rgba(43,42,51,0.12), inset 0 2px 2px rgba(255,255,255,0.9)',
-              transform: `rotate(${currentRotation}deg)`,
-              transition: isDragging ? 'none' : 'transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1)'
+              transform: `rotate(${currentRotation}deg)`
             }}
           >
-            {/* Ribbed knurling rim */}
-            <div className="absolute inset-1 rounded-full border border-[#D5C7B0]/60 pointer-events-none" />
-
-            {/* Brushed Brass Center Medallion */}
-            <div
-              className="absolute inset-3 rounded-full flex items-center justify-center border border-[#99741a]/30 shadow-inner"
-              style={{
-                background: 'conic-gradient(from 180deg at 50% 50%, #B89028 0deg, #F5D77F 90deg, #99741A 180deg, #FCE08B 270deg, #B89028 360deg)'
-              }}
-            >
-              <div className="w-3.5 h-3.5 rounded-full bg-[#EFE4CF] shadow-xs" />
-            </div>
-
-            {/* Tactile Terracotta Indicator Marker */}
-            <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1.5 h-3 bg-[#C8553D] rounded-full shadow-xs" />
+            {/* Notch / indicator line */}
+            <div className="absolute top-1 w-0.5 h-3 bg-[#A85C44] rounded-full shadow-xs" />
           </div>
         </div>
       </div>
 
-      {/* Hand-lettered Style Label */}
-      <div className="mt-1 text-center">
-        <div className="text-[12px] font-bold tracking-wide text-[#2B2A33] font-body">
+      {/* Label & Sublabel */}
+      <div className="text-center mt-0.5">
+        <span className="block text-[9px] font-bold uppercase tracking-wider text-[#2D3B34] leading-tight">
           {label}
-        </div>
+        </span>
         {sublabel && (
-          <div className="text-[10px] text-[#5A5766] font-body">
+          <span className="block text-[8px] font-semibold text-[#5A6B60] leading-tight">
             {sublabel}
-          </div>
+          </span>
         )}
       </div>
     </div>

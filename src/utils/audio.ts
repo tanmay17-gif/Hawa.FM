@@ -7,10 +7,22 @@ export type AudioSourceType = 'gemini' | 'browser' | 'captions';
 class RadioAudioEngine {
   private ctx: AudioContext | null = null;
   private isMuted: boolean = false;
+  private masterVolume: number = 0.8;
   private currentAudioElement: HTMLAudioElement | null = null;
   private isSpeakingActive: boolean = false;
   private lastActiveSource: AudioSourceType = 'browser';
   private memoryCache: Map<string, string> = new Map();
+
+  public setVolume(vol: number) {
+    this.masterVolume = Math.max(0, Math.min(1, vol));
+    if (this.currentAudioElement) {
+      this.currentAudioElement.volume = this.masterVolume;
+    }
+  }
+
+  public getVolume(): number {
+    return this.masterVolume;
+  }
 
   private initContext() {
     if (!this.ctx) {
@@ -161,6 +173,7 @@ class RadioAudioEngine {
       voiceName?: string;
       speed?: number;
       onStart?: () => void;
+      onProgress?: (progress: number) => void;
       onEnd?: () => void;
       onError?: (msg: string) => void;
     }
@@ -174,15 +187,15 @@ class RadioAudioEngine {
     this.isSpeakingActive = true;
     options?.onStart?.();
 
-    // Cache key for this specific station observation and language
-    const cacheKey = `hawafm_tts_${options?.stationId || 'cur'}_${options?.timestamp || 'now'}_${lang}`;
+    // Cache key for this specific station observation and language (v6 ensures fresh cache)
+    const cacheKey = `hawafm_tts_v6_${options?.stationId || 'cur'}_${options?.timestamp || 'now'}_${lang}`;
 
     // 1. Check in-memory or localStorage cache for Gemini TTS
     let base64Audio = this.memoryCache.get(cacheKey) || localStorage.getItem(cacheKey);
 
     if (base64Audio) {
       try {
-        await this.playBase64Audio(base64Audio, options?.onEnd);
+        await this.playBase64Audio(base64Audio, options?.onProgress, options?.onEnd);
         this.lastActiveSource = 'gemini';
         return 'gemini';
       } catch {
@@ -213,7 +226,7 @@ class RadioAudioEngine {
           } catch {
             // LocalStorage might be full, in-memory remains
           }
-          await this.playBase64Audio(audioUri, options?.onEnd);
+          await this.playBase64Audio(audioUri, options?.onProgress, options?.onEnd);
           this.lastActiveSource = 'gemini';
           return 'gemini';
         }
@@ -225,7 +238,7 @@ class RadioAudioEngine {
     // 3. Fallback to browser SpeechSynthesis
     if ('speechSynthesis' in window) {
       try {
-        const success = await this.speakBrowserSpeech(text, lang, options?.speed || 0.95, options?.onEnd);
+        const success = await this.speakBrowserSpeech(text, lang, options?.speed || 0.95, options?.onProgress, options?.onEnd);
         if (success) {
           this.lastActiveSource = 'browser';
           return 'browser';
@@ -243,14 +256,22 @@ class RadioAudioEngine {
     return 'captions';
   }
 
-  private playBase64Audio(src: string, onEnd?: () => void): Promise<void> {
+  private playBase64Audio(src: string, onProgress?: (p: number) => void, onEnd?: () => void): Promise<void> {
     return new Promise((resolve, reject) => {
       const audio = new Audio(src);
+      audio.volume = this.masterVolume;
       this.currentAudioElement = audio;
+
+      audio.ontimeupdate = () => {
+        if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+          onProgress?.(Math.min(1, audio.currentTime / audio.duration));
+        }
+      };
 
       audio.onended = () => {
         this.isSpeakingActive = false;
         this.currentAudioElement = null;
+        onProgress?.(1);
         onEnd?.();
         resolve();
       };
@@ -265,12 +286,20 @@ class RadioAudioEngine {
     });
   }
 
-  private speakBrowserSpeech(text: string, lang: 'en' | 'hi' | 'mr', rate: number, onEnd?: () => void): Promise<boolean> {
+  private speakBrowserSpeech(text: string, lang: 'en' | 'hi' | 'mr', rate: number, onProgress?: (p: number) => void, onEnd?: () => void): Promise<boolean> {
     return new Promise((resolve) => {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = rate;
       utterance.pitch = 1.0;
+      utterance.volume = this.masterVolume;
+
+      const totalChars = text.length || 1;
+      utterance.onboundary = (e) => {
+        if (e.charIndex) {
+          onProgress?.(Math.min(1, e.charIndex / totalChars));
+        }
+      };
 
       const getVoices = () => {
         const voices = window.speechSynthesis.getVoices();
@@ -278,21 +307,43 @@ class RadioAudioEngine {
         if (lang === 'hi') targetCode = 'hi-IN';
         if (lang === 'mr') targetCode = 'mr-IN';
 
-        const match = voices.find(v => v.lang.toLowerCase() === targetCode.toLowerCase() || v.lang.toLowerCase().startsWith(targetCode.split('-')[0]));
+        let match = voices.find(v => v.lang.toLowerCase() === targetCode.toLowerCase() || v.lang.toLowerCase().startsWith(targetCode.split('-')[0]));
+        
+        // If Marathi voice is not installed on this OS, fall back to Hindi voice (Devanagari phonetics) rather than English!
+        if (!match && lang === 'mr') {
+          match = voices.find(v => v.lang.toLowerCase().startsWith('hi'));
+        }
+
         if (match) {
           utterance.voice = match;
+          utterance.lang = match.lang;
+        } else if (lang === 'en') {
+          utterance.lang = 'en-IN';
+        } else {
+          // If neither Marathi nor Hindi voice exists on device, do NOT allow English voice to read Devanagari!
+          return false;
         }
-        utterance.lang = targetCode;
+        return true;
       };
 
       if (window.speechSynthesis.getVoices().length > 0) {
-        getVoices();
+        const hasVoice = getVoices();
+        if (!hasVoice && lang !== 'en') {
+          // No suitable Indic voice in browser; fallback to captions
+          this.isSpeakingActive = false;
+          onEnd?.();
+          resolve(false);
+          return;
+        }
       } else {
-        window.speechSynthesis.onvoiceschanged = getVoices;
+        window.speechSynthesis.onvoiceschanged = () => {
+          getVoices();
+        };
       }
 
       utterance.onend = () => {
         this.isSpeakingActive = false;
+        onProgress?.(1);
         onEnd?.();
         resolve(true);
       };

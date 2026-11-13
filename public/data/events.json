@@ -1,23 +1,5 @@
 [
   {
-    "id": "event_28",
-    "startIndex": 6176,
-    "endIndex": 6185,
-    "startTime": "2025-12-03T22:00",
-    "endTime": "2025-12-04T08:00",
-    "peakIndex": 6182,
-    "peakTime": "2025-12-04T05:00",
-    "peakPm25": 1224.9,
-    "durationHours": 10,
-    "recoveryHours": 0,
-    "affectedStations": [
-      "3409511",
-      "11611"
-    ],
-    "title": "2025-12-04 High Pollution Episode",
-    "tag": "Episode"
-  },
-  {
     "id": "event_16",
     "startIndex": 5197,
     "endIndex": 5276,
@@ -34,8 +16,26 @@
       "11611",
       "3409510"
     ],
-    "title": "2025-10-18 High Pollution Episode",
-    "tag": "Episode"
+    "title": "Diwali Festival Spike (Oct 2025)",
+    "tag": "Diwali"
+  },
+  {
+    "id": "event_28",
+    "startIndex": 6176,
+    "endIndex": 6185,
+    "startTime": "2025-12-03T22:00",
+    "endTime": "2025-12-04T08:00",
+    "peakIndex": 6182,
+    "peakTime": "2025-12-04T05:00",
+    "peakPm25": 1224.9,
+    "durationHours": 10,
+    "recoveryHours": 0,
+    "affectedStations": [
+      "3409511",
+      "11611"
+    ],
+    "title": "Severe Winter Inversion (Dec 2025)",
+    "tag": "Inversion"
   },
   {
     "id": "event_23",
@@ -54,8 +54,8 @@
       "11611",
       "3409510"
     ],
-    "title": "2025-11-28 High Pollution Episode",
-    "tag": "Episode"
+    "title": "Late Autumn Accumulation (Nov 2025)",
+    "tag": "Autumn"
   },
   {
     "id": "event_75",
@@ -93,30 +93,12 @@
       "3409511",
       "11611"
     ],
-    "title": "2025-11-19 High Pollution Episode",
-    "tag": "Episode"
-  },
-  {
-    "id": "event_26",
-    "startIndex": 6131,
-    "endIndex": 6140,
-    "startTime": "2025-12-01T23:00",
-    "endTime": "2025-12-02T09:00",
-    "peakIndex": 6135,
-    "peakTime": "2025-12-02T04:00",
-    "peakPm25": 773.7,
-    "durationHours": 10,
-    "recoveryHours": 6,
-    "affectedStations": [
-      "3409511",
-      "11611"
-    ],
-    "title": "2025-12-02 High Pollution Episode",
+    "title": "Mid-November Smog Surge (Nov 2025)",
     "tag": "Episode"
   },
   {
     "id": "event_monsoon_clean",
-    "title": "July 2025 Monsoon Clean Baseline",
+    "title": "Monsoon Clean Baseline (Jul 2025)",
     "tag": "Monsoon",
     "startIndex": 3362,
     "endIndex": 3434,

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Station,
   TimelineData,
@@ -11,30 +11,25 @@ import {
   Language,
   ModeBadge
 } from './types';
-import { LcdScreen } from './components/LcdScreen';
-import { FrequencyDial } from './components/FrequencyDial';
-import { RotaryKnob } from './components/RotaryKnob';
-import { BroadcastTicker } from './components/BroadcastTicker';
-import { AirDetective } from './components/AirDetective';
-import { AirObservatory } from './components/AirObservatory';
+import { LcdScreen, LcdMode } from './components/LcdScreen';
+import { LowerHardwareControls } from './components/LowerHardwareControls';
+import { InvestigationNoteModal } from './components/InvestigationNoteModal';
 import { ShareCardModal } from './components/ShareCardModal';
 import { AboutModal } from './components/AboutModal';
 import { OnboardingHint } from './components/OnboardingHint';
-import { VoiceSettingsSheet } from './components/VoiceSettingsSheet';
 import { radioAudio, AudioSourceType } from './utils/audio';
+import { generateScript } from './utils/scriptGenerator';
 import {
-  Play,
-  Pause,
-  RotateCcw,
+  Radio as RadioIcon,
   Compass,
   Activity,
-  Share2,
+  RotateCcw,
   Info,
-  Radio
+  Share2
 } from 'lucide-react';
 
 export default function App() {
-  // Data state loaded from precomputed static JSON
+  // Precomputed pipeline data state
   const [stations, setStations] = useState<Station[]>([]);
   const [timeline, setTimeline] = useState<TimelineData | null>(null);
   const [hourlyData, setHourlyData] = useState<Record<string, (number | null)[]>>({});
@@ -46,25 +41,25 @@ export default function App() {
   const [i18nDict, setI18nDict] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(true);
 
-  // User interactive state (Single Source of Truth)
+  // Single Source of Truth state
   const [selectedStationId, setSelectedStationId] = useState<string>('11611'); // Malad West default
   const [timeIndex, setTimeIndex] = useState<number>(0);
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [activeMode, setActiveMode] = useState<LcdMode>('radio');
+  const [selectedEventId, setSelectedEventId] = useState<string>('event_1');
+  const [isPlayingReplay, setIsPlayingReplay] = useState<boolean>(false);
   const [language, setLanguage] = useState<Language>('en');
+  const [volumePercent, setVolumePercent] = useState<number>(80);
   const [isMuted, setIsMuted] = useState<boolean>(false);
-  const [autoAnnounce, setAutoAnnounce] = useState<boolean>(false);
 
-  // Voice engine states
+  // Voice engine state
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [isLoadingVoice, setIsLoadingVoice] = useState<boolean>(false);
-  const [voiceError, setVoiceError] = useState<string | null>(null);
-  const [voiceSpeed, setVoiceSpeed] = useState<number>(0.95);
-  const [activeAudioSource, setActiveAudioSource] = useState<AudioSourceType>('browser');
-  const [showVoiceSettings, setShowVoiceSettings] = useState<boolean>(false);
+  const [audioProgress, setAudioProgress] = useState<number>(0);
+  const [, setVoiceError] = useState<string | null>(null);
+  const [, setActiveAudioSource] = useState<AudioSourceType>('browser');
 
-  // UI Panels & Modals
-  const [activePanel, setActivePanel] = useState<'none' | 'detective' | 'observatory'>('none');
-  const [selectedEventId, setSelectedEventId] = useState<string>('event_1');
+  // Modals
+  const [showPrintModal, setShowPrintModal] = useState<boolean>(false);
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
   const [showAboutModal, setShowAboutModal] = useState<boolean>(false);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
@@ -84,7 +79,8 @@ export default function App() {
           prRes,
           enRes,
           hiRes,
-          mrRes
+          mrRes,
+          diRes
         ] = await Promise.all([
           fetch('/data/stations.json').then(r => r.json()),
           fetch('/data/timeline.json').then(r => r.json()),
@@ -96,7 +92,8 @@ export default function App() {
           fetch('/data/presets.json').then(r => r.json()),
           fetch('/i18n/en.json').then(r => r.json()),
           fetch('/i18n/hi.json').then(r => r.json()),
-          fetch('/i18n/mr.json').then(r => r.json())
+          fetch('/i18n/mr.json').then(r => r.json()),
+          fetch('/data/date_index.json').then(r => r.json())
         ]);
 
         setStations(stRes);
@@ -108,15 +105,16 @@ export default function App() {
         setAmiData(amiRes);
         setPresets(prRes);
         setI18nDict({ en: enRes, hi: hiRes, mr: mrRes });
+        void diRes; // date_index loaded for future use
 
         if (tlRes && tlRes.timestamps.length > 0) {
           setTimeIndex(tlRes.timestamps.length - 1);
         }
 
-        const visited = localStorage.getItem('hawafm_visited_v2');
+        const visited = localStorage.getItem('hawafm_visited_v4');
         if (!visited) {
           setShowOnboarding(true);
-          localStorage.setItem('hawafm_visited_v2', 'true');
+          localStorage.setItem('hawafm_visited_v4', 'true');
         }
 
         setIsLoading(false);
@@ -127,18 +125,29 @@ export default function App() {
     loadData();
   }, []);
 
-  // Currently selected station
+  // Currently selected station (Single Source of Truth)
   const currentStation = useMemo(() => {
-    return stations.find(s => s.id === selectedStationId) || stations[0];
+    return stations.find(s => s.id === selectedStationId) || stations[0] || {
+      id: '11611',
+      name: 'Malad West',
+      fullName: 'Malad West, Mumbai',
+      agency: 'MPCB',
+      area: 'Western Suburbs',
+      description: 'Coastal suburban monitoring site',
+      frequency: 95.2,
+      freqLabel: 'FM 95.2',
+      lat: 19.186,
+      lon: 72.848
+    };
   }, [stations, selectedStationId]);
 
-  // Current timestamp (Unified Single Source of Truth)
+  // Current timestamp (Single Source of Truth)
   const currentTimestamp = useMemo(() => {
     if (!timeline || !timeline.timestamps[timeIndex]) return '';
     return timeline.timestamps[timeIndex];
   }, [timeline, timeIndex]);
 
-  // Current PM2.5 (Unified Single Source of Truth)
+  // Current PM2.5 (Single Source of Truth)
   const currentPm25 = useMemo(() => {
     if (!hourlyData[selectedStationId]) return null;
     return hourlyData[selectedStationId][timeIndex] ?? null;
@@ -153,7 +162,7 @@ export default function App() {
     return vals;
   }, [stations, hourlyData, timeIndex]);
 
-  // Determine Air Category word
+  // Air Category word (derived strictly from PM2.5 thresholds)
   const airCategory: AirCategory = useMemo(() => {
     if (currentPm25 === null) return 'okay';
     if (currentPm25 <= 30) return 'fresh';
@@ -163,13 +172,13 @@ export default function App() {
     return 'severe';
   }, [currentPm25]);
 
-  // Permanent Badge: MEASURED or REPLAY (Strict Rule 3 compliant)
+  // Mode badge: MEASURED or REPLAY (Strict Rule 3 compliant)
   const modeBadge: ModeBadge = useMemo(() => {
     if (!timeline) return 'MEASURED';
     return timeIndex >= timeline.total_hours - 24 ? 'MEASURED' : 'REPLAY';
   }, [timeline, timeIndex]);
 
-  // Check if current hour falls in an anomaly episode
+  // Active anomaly for current station & hour
   const activeAnomaly = useMemo(() => {
     const eps = anomalies[selectedStationId] || [];
     return eps.find(
@@ -179,12 +188,12 @@ export default function App() {
 
   const isAnomaly = !!activeAnomaly;
 
-  // Active i18n dictionary
+  // Active dictionary
   const currentDict = useMemo(() => {
     return i18nDict[language] || i18nDict['en'] || {};
   }, [i18nDict, language]);
 
-  // Category labels in active language
+  // Category labels
   const categoryLabels = useMemo(() => {
     return (
       currentDict.air_categories || {
@@ -197,7 +206,7 @@ export default function App() {
     );
   }, [currentDict]);
 
-  // 24 hours of readings ending at current timeIndex for ribbon chart (gaps preserved as null)
+  // 24 hours of readings ending at current timeIndex for ribbon chart
   const today24Hours = useMemo(() => {
     const res: { hour: number; val: number | null }[] = [];
     const series = hourlyData[selectedStationId] || [];
@@ -209,174 +218,133 @@ export default function App() {
     return res;
   }, [hourlyData, selectedStationId, timeIndex]);
 
-  // Deterministic Voice Bulletin Template (Rule 7 compliant, zero contradiction during anomaly)
-  const bulletinText = useMemo(() => {
-    if (!currentDict.bulletin_templates) return 'Broadcasting Hawa.fm...';
+  // Baseline median for current hour
+  const currentHourNum = parseInt(currentTimestamp.split('T')[1]?.split(':')[0] || '12', 10);
+  const currentBaseline = baselines[selectedStationId]?.diurnal || [];
+  const currentBaseHour = currentBaseline.find(b => b.hour === currentHourNum);
+  const currentMedian = currentBaseHour?.median || 40;
 
-    if (currentPm25 === null) {
-      return currentDict.bulletin_templates.no_signal;
-    }
-
-    const tpl = currentDict.bulletin_templates.standard;
-    const catLabel = categoryLabels[airCategory] || 'Hazy';
-
-    // Trend calculation vs 3 hours ago (guarded against contradiction when anomaly is active)
-    const prevPm = timeIndex >= 3 ? hourlyData[selectedStationId]?.[timeIndex - 3] : null;
-    let trendText = currentDict.bulletin_templates.trend_steady;
-
-    if (isAnomaly) {
-      if (prevPm !== null && prevPm !== undefined) {
-        if (currentPm25 - prevPm > 10) {
-          trendText = currentDict.bulletin_templates.trend_rising_anomaly || 'surging sharply';
-        } else if (prevPm - currentPm25 > 10) {
-          trendText = currentDict.bulletin_templates.trend_easing_anomaly || 'easing slightly from its peak but remaining unusually high';
-        } else {
-          trendText = currentDict.bulletin_templates.trend_steady_anomaly || 'staying persistently elevated';
-        }
-      } else {
-        trendText = currentDict.bulletin_templates.trend_steady_anomaly || 'staying persistently elevated';
-      }
-    } else {
-      if (prevPm !== null && prevPm !== undefined) {
-        if (currentPm25 - prevPm > 12) trendText = currentDict.bulletin_templates.trend_rising;
-        else if (prevPm - currentPm25 > 12) trendText = currentDict.bulletin_templates.trend_falling;
-      }
-    }
-
-    // Comparison to hour baseline (Usual for this hour)
-    const hourNum = parseInt(currentTimestamp.split('T')[1]?.split(':')[0] || '12', 10);
-    const baseHour = baselines[selectedStationId]?.diurnal?.find(b => b.hour === hourNum);
-    const med = baseHour?.median || 40;
-    let baseText = currentDict.bulletin_templates.baseline_near;
-    if (currentPm25 > med * 1.3) baseText = currentDict.bulletin_templates.baseline_above;
-    else if (currentPm25 < med * 0.7) baseText = currentDict.bulletin_templates.baseline_below;
-
-    let filled = tpl
-      .replace('{station_name}', currentStation ? currentStation.name : 'Mumbai')
-      .replace('{time_str}', currentTimestamp.replace('T', ' at ') + ' IST')
-      .replace('{air_category}', catLabel)
-      .replace('{pm25}', currentPm25.toFixed(1))
-      .replace('{trend_text}', trendText)
-      .replace('{baseline_text}', baseText);
-
-    if (isAnomaly) {
-      filled += currentDict.bulletin_templates.anomaly_suffix;
-    }
-
-    return filled;
+  // Generate natural spoken script using the speech normalization layer
+  const naturalScript = useMemo(() => {
+    return generateScript({
+      station: currentStation,
+      timestamp: currentTimestamp,
+      pm25: currentPm25,
+      airCategory,
+      categoryLabel: categoryLabels[airCategory] || 'Hazy',
+      isAnomaly,
+      anomalyScope: activeAnomaly?.scope,
+      concurrentStations: activeAnomaly?.concurrentElevatedStations || 0,
+      baselineMedian: currentMedian,
+      isReplay: modeBadge === 'REPLAY',
+      language
+    });
   }, [
-    currentDict,
+    currentStation,
+    currentTimestamp,
     currentPm25,
     airCategory,
     categoryLabels,
-    currentStation,
-    currentTimestamp,
-    timeIndex,
-    hourlyData,
-    selectedStationId,
-    baselines,
-    isAnomaly
+    isAnomaly,
+    activeAnomaly,
+    currentMedian,
+    modeBadge,
+    language
   ]);
 
-  // Stop speech immediately when station or time scrubs
+  // Station and Time Change Handlers
   const handleStationChange = (newStationId: string) => {
     radioAudio.stopSpeaking();
     setIsSpeaking(false);
+    setAudioProgress(0);
     setSelectedStationId(newStationId);
   };
 
   const handleTimeChange = (newTimeIndex: number) => {
     radioAudio.stopSpeaking();
     setIsSpeaking(false);
+    setAudioProgress(0);
     setTimeIndex(newTimeIndex);
-    if (isPlaying) setIsPlaying(false);
+    if (isPlayingReplay) setIsPlayingReplay(false);
   };
 
-  // Audio Auto-Announce trigger on tune
-  const prevStationRef = useRef<string>(selectedStationId);
-  useEffect(() => {
-    if (prevStationRef.current !== selectedStationId) {
-      prevStationRef.current = selectedStationId;
-      if (autoAnnounce && !isMuted) {
-        handleTriggerListen();
-      }
-    }
-  }, [selectedStationId, autoAnnounce, isMuted]);
-
-  // Auto-play loop for Event Replay
+  // Replay play/pause loop
   useEffect(() => {
     let timer: ReturnType<typeof setInterval>;
-    if (isPlaying && timeline) {
+    if (isPlayingReplay && timeline) {
       timer = setInterval(() => {
         setTimeIndex(prev => {
           if (prev >= timeline.total_hours - 1) {
-            setIsPlaying(false);
+            setIsPlayingReplay(false);
             return prev;
           }
           return prev + 1;
         });
-      }, 750);
+      }, 700);
     }
     return () => clearInterval(timer);
-  }, [isPlaying, timeline]);
+  }, [isPlayingReplay, timeline]);
 
-  // Station index mapping for Left TUNE RotaryKnob
-  const stationIndex = useMemo(() => {
-    const idx = stations.findIndex(s => s.id === selectedStationId);
-    return idx >= 0 ? idx : 0;
-  }, [stations, selectedStationId]);
-
-  const handleTuneKnobChange = (newIdx: number) => {
-    if (stations[newIdx] && stations[newIdx].id !== selectedStationId) {
-      handleStationChange(stations[newIdx].id);
-      radioAudio.playStaticBurst(0.12, 0.06);
-    }
+  // Mode switch handler with tactile click and static burst
+  const handleSwitchMode = (mode: LcdMode) => {
+    if (mode === activeMode) return;
+    radioAudio.playKnobClick();
+    radioAudio.playStaticBurst(0.12, 0.05);
+    setActiveMode(mode);
   };
 
-  // Trigger Listen Button Action (Physical push button)
+  // Listen trigger handler
   const handleTriggerListen = async () => {
     if (isSpeaking) {
       radioAudio.stopSpeaking();
       setIsSpeaking(false);
+      setAudioProgress(0);
       return;
     }
 
     setVoiceError(null);
     setIsLoadingVoice(true);
+    setAudioProgress(0);
     radioAudio.playChime();
 
     try {
-      const sourceUsed = await radioAudio.speakBulletin(bulletinText, language, {
+      const sourceUsed = await radioAudio.speakBulletin(naturalScript.fullText, language, {
         stationId: selectedStationId,
         timestamp: currentTimestamp,
-        speed: voiceSpeed,
+        speed: 0.95,
         onStart: () => {
           setIsLoadingVoice(false);
           setIsSpeaking(true);
         },
+        onProgress: (p) => {
+          setAudioProgress(p);
+        },
         onEnd: () => {
           setIsSpeaking(false);
           setIsLoadingVoice(false);
+          setAudioProgress(0);
         },
         onError: (errMsg) => {
           setVoiceError(errMsg);
         }
       });
       setActiveAudioSource(sourceUsed);
-    } catch (err: any) {
+    } catch {
       setIsSpeaking(false);
       setIsLoadingVoice(false);
+      setAudioProgress(0);
       setVoiceError('Voice engine unavailable; please read on-screen bulletin.');
     }
   };
 
-  // Preset button click handler
+  // Preset click
   const handlePresetClick = (preset: PresetMoment) => {
     if (!timeline) return;
     radioAudio.playKnobClick();
     radioAudio.playChime();
     radioAudio.stopSpeaking();
     setIsSpeaking(false);
+    setAudioProgress(0);
 
     const targetIdx = timeline.timestamps.findIndex(t => t.startsWith(preset.timestamp));
     if (targetIdx >= 0) {
@@ -385,28 +353,57 @@ export default function App() {
     setSelectedStationId(preset.stationId);
   };
 
-  // Jump from Observatory directly into an event
+  // Jump to event from seismo
   const handleJumpToEvent = (ts: string, stationId: string) => {
     if (!timeline) return;
     radioAudio.stopSpeaking();
     setIsSpeaking(false);
-
+    setAudioProgress(0);
     const targetIdx = timeline.timestamps.findIndex(t => t.startsWith(ts));
     if (targetIdx >= 0) {
       setTimeIndex(targetIdx);
     }
     setSelectedStationId(stationId);
+    setActiveMode('radio');
     radioAudio.playChime();
+  };
+
+  // Jump to historical event in Replay mode
+  const handleJumpToReplay = (ts: string, stationId: string) => {
+    if (!timeline) return;
+    radioAudio.stopSpeaking();
+    setIsSpeaking(false);
+    setAudioProgress(0);
+    const targetIdx = timeline.timestamps.findIndex(t => t.startsWith(ts.slice(0, 13)));
+    if (targetIdx >= 0) {
+      setTimeIndex(targetIdx);
+    }
+    setSelectedStationId(stationId);
+    setActiveMode('replay');
+    radioAudio.playChime();
+  };
+
+  // Volume slider handler
+  const handleVolumeChange = (newVol: number) => {
+    setVolumePercent(newVol);
+    radioAudio.setVolume(newVol / 100);
+    if (newVol === 0 && !isMuted) {
+      setIsMuted(true);
+      radioAudio.setMuted(true);
+    } else if (newVol > 0 && isMuted) {
+      setIsMuted(false);
+      radioAudio.setMuted(false);
+    }
   };
 
   if (isLoading || !timeline) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#EFE6D6] text-[#2B2A33] font-body">
+      <div className="h-screen w-screen flex items-center justify-center bg-[#F4EDDF] text-[#343B35] font-sans">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-[#C8553D] border-t-transparent rounded-full animate-spin" />
-          <div className="text-xs uppercase tracking-wider text-[#C8553D] font-bold flex items-center gap-1.5">
-            <Radio className="w-4 h-4 animate-pulse" />
-            <span>Finding Signal... (Tuning in to Mumbai)</span>
+          <div className="w-8 h-8 border-3 border-[#B66C4D] border-t-transparent rounded-full animate-spin" />
+          <div className="text-xs uppercase tracking-wider text-[#B66C4D] font-bold flex items-center gap-1.5">
+            <RadioIcon className="w-4 h-4 animate-pulse" />
+            <span>Tuning in to Mumbai&apos;s Air...</span>
           </div>
         </div>
       </div>
@@ -415,309 +412,269 @@ export default function App() {
 
   return (
     <main
-      className="min-h-screen w-full bg-[#EFE6D6] paper-texture text-[#2B2A33] flex flex-col items-center justify-center p-2.5 sm:p-5 md:p-8"
+      className={`w-full min-h-[100dvh] md:h-[100dvh] overflow-x-hidden overflow-y-auto md:overflow-hidden flex flex-col items-center justify-start md:justify-center pt-14 sm:pt-16 pb-6 md:pb-2 px-2 sm:px-3 md:px-4 select-none ${
+        isSpeaking ? 'speaking' : ''
+      }`}
       role="main"
     >
-      {/* Outer Wide Sandalwood/Cream Radio Cabinet (Landscape layout on desktop, stacked on mobile) */}
-      <div className="relative w-full max-w-[520px] lg:max-w-[1080px] flex flex-col lg:flex-row gap-6 items-stretch">
-        {/* PHYSICAL TABLETOP RADIO CABINET */}
-        <section
-          className="relative w-full flex-1 rounded-3xl bg-gradient-to-b from-[#F9F4EB] via-[#F6EFE2] to-[#EBDCC5] border-3 border-[#CBBCA3] shadow-[0_20px_45px_rgba(43,42,51,0.12),inset_0_2px_4px_rgba(255,255,255,0.9)] p-4 sm:p-6 flex flex-col gap-4"
-          aria-label="Hawa.fm Vintage Tabletop Radio"
+      {/* ─── PHYSICAL RADIO HARDWARE SHELL ───────────────────────────────────── */}
+      <div className="radio-shell w-full max-w-[1060px] min-h-0 h-auto md:h-full md:max-h-[615px] p-2.5 sm:p-4 md:p-5 flex flex-col justify-between relative shadow-2xl overflow-visible">
+        
+        {/* ─── CENTRAL TELESCOPIC METAL RADIO ANTENNA ──────────────────────── */}
+        <div
+          className="absolute -top-16 sm:-top-20 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none z-30 drop-shadow-[0_4px_6px_rgba(40,51,41,0.35)]"
+          title="Telescopic FM Radio Antenna"
         >
-          {/* CABINET TOP BAR: Wordmark, Indian Brass Badge & Quick Controls */}
-          <div className="flex items-center justify-between border-b border-[#D5C7B0] pb-3">
-            {/* Wordmark and Tagline */}
+          {/* Telescopic Mast Assembly */}
+          <div className="radio-antenna-mast flex flex-col items-center origin-bottom">
+            {/* Top Tip Finial: Polished Chrome Bead */}
+            <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-b from-[#FFFFFF] via-[#D8DFDB] to-[#707E76] border border-[#283329]/50 shadow-xs flex items-center justify-center">
+              <div className="w-1 h-1 rounded-full bg-white/90" />
+            </div>
+
+            {/* Stage 3 (Top - Slimmest): ~2.5px */}
+            <div className="w-[2.5px] h-6 bg-gradient-to-r from-[#8E9A92] via-[#FFFFFF] to-[#6E7A72] border-x border-[#283329]/30" />
+
+            {/* Telescopic Ring Joint 2 */}
+            <div className="w-1.5 h-1 rounded-xs bg-gradient-to-r from-[#5A665E] via-[#E4EBE6] to-[#4A554E] border border-[#283329]/50 shadow-2xs" />
+
+            {/* Stage 2 (Middle): ~3.5px */}
+            <div className="w-[3.5px] h-6 bg-gradient-to-r from-[#86948A] via-[#F4F8F5] to-[#627066] border-x border-[#283329]/40" />
+
+            {/* Telescopic Ring Joint 1 */}
+            <div className="w-2 h-1 rounded-xs bg-gradient-to-r from-[#4A564E] via-[#E4EBE6] to-[#3A453E] border border-[#283329]/60 shadow-2xs" />
+
+            {/* Stage 1 (Base - Stoutest): ~5px */}
+            <div className="w-[5px] h-7 bg-gradient-to-r from-[#708075] via-[#EBF2ED] to-[#506055] border-x border-[#283329]/50" />
+          </div>
+
+          {/* Antenna Base Swivel Mount Bracket (Firmly seated on cabinet top rim) */}
+          <div className="w-6 h-2.5 rounded-t-md bg-gradient-to-b from-[#8C9890] via-[#5A6860] to-[#283329] border-t-2 border-x border-[#1E2620] shadow-sm flex items-center justify-center relative -mb-0.5">
+            {/* Swivel Pivot Ball Collar */}
+            <div className="w-3 h-2 rounded-t-full bg-gradient-to-r from-[#4A564E] via-[#E4EBE6] to-[#3A453E] border border-[#1E2620]/60" />
+          </div>
+        </div>
+
+        {/* ─── CABINET TOP BAR: Branding, Antenna & Meta Controls ─────────────── */}
+        <div className="flex items-center justify-between pb-2 border-b border-[#343B35]/20 shrink-0">
+          
+          {/* HAWA.fm Branding & Station Frequency (On the left, never overlaps LCD) */}
+          <div className="flex items-center gap-3">
             <div className="flex flex-col">
-              <div className="flex items-baseline gap-2">
-                <h1 className="font-wordmark text-2xl sm:text-3xl tracking-tight text-[#2B2A33]">
-                  Hawa<span className="text-[#C8553D]">.fm</span>
-                </h1>
-                {/* Brass Signal Quality Indicators */}
-                <div
-                  className="flex items-end gap-1 h-3.5 ml-1.5"
-                  title={currentPm25 !== null ? 'Radio signal locked' : 'Signal weak'}
-                >
-                  <span className={`w-1 rounded-xs ${currentPm25 !== null ? 'h-1.5 bg-[#2F7F86]' : 'h-1.5 bg-[#C8553D] animate-ping'}`} />
-                  <span className={`w-1 rounded-xs ${currentPm25 !== null ? 'h-2.5 bg-[#2F7F86]' : 'h-2.5 bg-[#D5C7B0]'}`} />
-                  <span className={`w-1 rounded-xs ${currentPm25 !== null ? 'h-3 bg-[#2F7F86]' : 'h-3 bg-[#D5C7B0]'}`} />
-                  <span className={`w-1 rounded-xs ${currentPm25 !== null ? 'h-3.5 bg-[#2F7F86]' : 'h-3.5 bg-[#D5C7B0]'}`} />
-                </div>
-              </div>
-              <span className="text-[11px] font-body text-[#8C7428] font-bold tracking-wide">
-                {currentDict.tagline || "Tune in to Mumbai's air"}
+              <h1 className="font-brand text-2xl sm:text-3xl font-bold tracking-tight text-[#343B35] leading-none">
+                HAWA<span className="text-[#B66C4D]">.fm</span>
+              </h1>
+              <span className="text-[10px] font-sans font-bold text-[#8C7428] tracking-wide mt-0.5">
+                Mumbai&apos;s Atmospheric Intelligence Radio
               </span>
             </div>
-
-            {/* Language Selection & About Button */}
-            <div className="flex items-center gap-2">
-              <div
-                className="flex rounded-lg p-0.5 bg-[#EFE4CF] border border-[#D5C7B0] font-body text-[11px]"
-                role="group"
-                aria-label="Language selection"
-              >
-                {(['en', 'hi', 'mr'] as Language[]).map(l => (
-                  <button
-                    key={l}
-                    onClick={() => {
-                      setLanguage(l);
-                      radioAudio.playKnobClick();
-                    }}
-                    className={`px-2.5 py-0.5 rounded-md transition-all font-bold ${
-                      language === l
-                        ? 'bg-[#C8553D] text-white shadow-xs'
-                        : 'text-[#5A5766] hover:text-[#2B2A33]'
-                    }`}
-                  >
-                    {l === 'en' ? 'EN' : l === 'hi' ? 'हिं' : 'मरा'}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setShowAboutModal(true)}
-                className="p-1.5 rounded-lg text-[#5A5766] hover:text-[#2B2A33] bg-[#EFE4CF] border border-[#D5C7B0] transition-colors"
-                title="About Hawa.fm"
-                aria-label="Open About Information"
-              >
-                <Info className="w-4 h-4" />
-              </button>
-            </div>
           </div>
 
-          {/* RADIO BODY: Woven Speaker Grille + Window on Desktop */}
-          <div className="flex flex-col sm:flex-row gap-4 items-stretch">
-            {/* Woven Fabric Speaker Grille (Vibrates gently when voice broadcasts) */}
-            <div
-              className={`hidden sm:flex w-24 sm:w-28 rounded-xl speaker-grille p-2 border-2 border-[#CBBCA3] flex-col items-center justify-between shrink-0 shadow-inner ${
-                isSpeaking ? 'speaker-speaking' : ''
-              }`}
-              title="Woven radio speaker grille"
-            >
-              <div className="text-[9px] font-wordmark text-[#5A5766] tracking-wider uppercase">Speaker</div>
-              <div className="w-10 h-10 rounded-full border-2 border-[#CBBCA3]/60 bg-black/10 flex items-center justify-center">
-                <div className={`w-4 h-4 rounded-full bg-[#C8553D]/30 ${isSpeaking ? 'animate-ping' : ''}`} />
-              </div>
-              <div className="text-[8px] font-body text-[#7A7885] text-center">8Ω Dynamic</div>
-            </div>
-
-            {/* LARGE GLASS WINDOW (Houses the painted Mumbai living skyline & overlays) */}
-            <div className="flex-1">
-              <LcdScreen
-                currentStation={currentStation}
-                currentTimestamp={currentTimestamp}
-                pm25={currentPm25}
-                airCategory={airCategory}
-                modeBadge={modeBadge}
-                isAnomaly={isAnomaly}
-                anomalyZ={activeAnomaly?.peakRobustZ}
-                anomalyScope={activeAnomaly?.scope}
-                language={language}
-                categoryLabels={categoryLabels}
-                onOpenDetective={() => setActivePanel('detective')}
-              />
-            </div>
-          </div>
-
-          {/* LONG ANALOG FREQUENCY DIAL STRIP WITH SWINGING NEEDLE */}
-          <FrequencyDial
-            stations={stations}
-            currentStationId={selectedStationId}
-            onSelectStation={id => handleStationChange(id)}
-          />
-
-          {/* BROADCAST VOICE TICKER WITH LARGE PHYSICAL "LISTEN" PUSH BUTTON */}
-          <BroadcastTicker
-            bulletinText={bulletinText}
-            language={language}
-            isMuted={isMuted}
-            onToggleMute={() => {
-              const next = !isMuted;
-              setIsMuted(next);
-              radioAudio.setMuted(next);
-            }}
-            onOpenVoiceSettings={() => setShowVoiceSettings(true)}
-            isSpeaking={isSpeaking}
-            isLoadingVoice={isLoadingVoice}
-            voiceError={voiceError}
-            onTriggerListen={handleTriggerListen}
-            activeSource={activeAudioSource}
-          />
-
-          {/* BOTTOM CONTROLS: TWO CHUNKY ROTARY KNOBS + PUSH BUTTONS */}
-          <div className="flex items-center justify-between pt-1 border-t border-[#D5C7B0]">
-            {/* LEFT ROTARY KNOB: TUNE (STATION) */}
-            <RotaryKnob
-              label={currentDict.ui?.tune_knob || 'Station Dial'}
-              sublabel={currentStation.freqLabel}
-              value={stationIndex}
-              min={0}
-              max={stations.length - 1}
-              step={1}
-              ticks={stations.length}
-              size={64}
-              onChange={handleTuneKnobChange}
-              ariaLabel="Tune Radio Station"
-            />
-
-            {/* CENTRE PRESET MOMENT PUSH BUTTONS & REPLAY PLAY/PAUSE */}
-            <div className="flex flex-col items-center gap-2">
-              {/* Preset Buttons */}
-              <div className="flex gap-1.5" role="group" aria-label="Historical presets">
-                {presets.map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => handlePresetClick(p)}
-                    className="px-2.5 py-1 rounded-lg bg-[#EFE4CF] hover:bg-[#E5D7BF] border border-[#D5C7B0] text-[10px] font-bold text-[#2B2A33] transition-all active:scale-95 shadow-xs"
-                    title={p.fullTitle}
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Play / Replay Scrubber Controls */}
-              <div className="flex items-center gap-2">
+          {/* Quick Header Controls (Language, About, Share) */}
+          <div className="flex items-center gap-2">
+            {/* Multilingual Selector */}
+            <div className="flex rounded-md p-0.5 bg-[#FAF6EE] border border-[#343B35]/25 text-[10px] font-bold">
+              {(['en', 'hi', 'mr'] as Language[]).map(l => (
                 <button
+                  key={l}
                   onClick={() => {
+                    setLanguage(l);
                     radioAudio.playKnobClick();
-                    setIsPlaying(!isPlaying);
                   }}
-                  className={`px-3.5 py-1.5 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all active:scale-95 ${
-                    isPlaying
-                      ? 'bg-[#C8553D] text-white shadow-sm'
-                      : 'bg-[#EFE4CF] hover:bg-[#E5D7BF] text-[#2B2A33] border border-[#D5C7B0]'
+                  className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                    language === l
+                      ? 'bg-[#B66C4D] text-white shadow-xs'
+                      : 'text-[#343B35]/70 hover:text-[#343B35]'
                   }`}
-                  aria-label={isPlaying ? 'Pause replay' : 'Auto play event replay'}
                 >
-                  {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 text-[#C8553D]" />}
-                  <span>{isPlaying ? 'Pause' : 'Replay'}</span>
+                  {l === 'en' ? 'EN' : l === 'hi' ? 'हिं' : 'मरा'}
                 </button>
+              ))}
+            </div>
 
-                <button
-                  onClick={() => {
-                    radioAudio.playKnobClick();
-                    handleTimeChange(timeline.total_hours - 1);
-                  }}
-                  className="px-2.5 py-1.5 rounded-full text-[10px] font-bold bg-[#EFE4CF] hover:bg-[#E5D7BF] text-[#5A5766] hover:text-[#2B2A33] border border-[#D5C7B0] transition-colors flex items-center gap-1"
-                  title="Jump to latest measured observation"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  <span>Latest</span>
-                </button>
+            {/* About Modal Button */}
+            <button
+              onClick={() => setShowAboutModal(true)}
+              className="p-1.5 rounded-md bg-[#FAF6EE] hover:bg-[#E8DDC9] border border-[#343B35]/25 text-[#343B35] transition-colors cursor-pointer"
+              title="About HAWA.fm & Methodology"
+              aria-label="About HAWA.fm"
+            >
+              <Info className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Share Postcard Button */}
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="p-1.5 rounded-md bg-[#FAF6EE] hover:bg-[#E8DDC9] border border-[#343B35]/25 text-[#343B35] transition-colors cursor-pointer"
+              title="Share Air Postcard"
+              aria-label="Share Air Postcard"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* ─── CABINET BODY: Speaker Grille + LCD Screen + 4 Mode Buttons ─────── */}
+        <div className="flex-1 my-2 flex flex-col md:flex-row gap-2.5 min-h-0 items-stretch">
+          
+          {/* Left Column: Speaker Grille on Left (wavy lines) */}
+          <div className="hidden md:flex w-22 speaker-grille-box p-2 flex-col justify-between items-center shrink-0">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-[#343B35]/70">
+              Speaker
+            </span>
+
+            {/* Hand-drawn speaker grille pattern with subtle pulsing during voice */}
+            <div className="w-full h-36 speaker-waves rounded-lg border border-[#343B35]/20 flex items-center justify-center shadow-inner relative overflow-hidden">
+              <svg className="w-full h-full opacity-35" viewBox="0 0 100 160" preserveAspectRatio="none">
+                <path
+                  d="M 10 20 Q 50 35 90 20 M 10 40 Q 50 55 90 40 M 10 60 Q 50 75 90 60 M 10 80 Q 50 95 90 80 M 10 100 Q 50 115 90 100 M 10 120 Q 50 135 90 120 M 10 140 Q 50 155 90 140"
+                  fill="none"
+                  stroke="#343B35"
+                  strokeWidth="2.5"
+                />
+              </svg>
+              {/* Center Diaphragm */}
+              <div className="absolute w-7 h-7 rounded-full border-2 border-[#343B35]/40 bg-[#343B35]/10 flex items-center justify-center">
+                <div className={`w-2.5 h-2.5 rounded-full bg-[#B66C4D]/40 ${isSpeaking ? 'animate-ping' : ''}`} />
               </div>
             </div>
 
-            {/* RIGHT ROTARY KNOB: TIME (SCRUB HISTORY) */}
-            <RotaryKnob
-              label={currentDict.ui?.time_knob || 'Time Travel'}
-              sublabel={currentTimestamp.slice(0, 10)}
-              value={timeIndex}
-              min={0}
-              max={timeline.total_hours - 1}
-              step={1}
-              ticks={16}
-              size={64}
-              onChange={handleTimeChange}
-              ariaLabel="Scrub Time History"
+            <div className="text-center">
+              <span className="block text-[8px] font-bold text-[#8C7428]">8Ω Solid</span>
+              <span className="block text-[7px] text-[#343B35]/60">FM 98.4</span>
+            </div>
+          </div>
+
+          {/* Center Column: Dedicated Single LCD Screen */}
+          <div className="flex-1 min-w-0 h-full min-h-0">
+            <LcdScreen
+              activeMode={activeMode}
+              currentStation={currentStation}
+              currentTimestamp={currentTimestamp}
+              pm25={currentPm25}
+              airCategory={airCategory}
+              modeBadge={modeBadge}
+              isAnomaly={isAnomaly}
+              anomalyScope={activeAnomaly?.scope}
+              language={language}
+              onSelectLanguage={setLanguage}
+              categoryLabels={categoryLabels}
+              bulletinHeadline={naturalScript.aqiSummary}
+              bulletinFullText={naturalScript.fullText}
+              isSpeaking={isSpeaking}
+              isLoadingVoice={isLoadingVoice}
+              audioProgress={audioProgress}
+              isMuted={isMuted}
+              onTriggerListen={handleTriggerListen}
+              onToggleMute={() => {
+                const next = !isMuted;
+                setIsMuted(next);
+                radioAudio.setMuted(next);
+              }}
+              onOpenDetect={() => setActiveMode('detect')}
+              stations={stations}
+              onSelectStation={handleStationChange}
+              baselines={baselines}
+              anomalies={anomalies}
+              allStationCurrentValues={allStationCurrentValues}
+              today24Hours={today24Hours}
+              onOpenPrintModal={() => setShowPrintModal(true)}
+              onJumpToReplay={handleJumpToReplay}
+              events={events}
+              amiData={amiData}
+              selectedEventId={selectedEventId}
+              onSelectEvent={setSelectedEventId}
+              allHourlyValues={hourlyData}
+              onJumpToEvent={handleJumpToEvent}
+              timeline={timeline}
+              timeIndex={timeIndex}
+              isPlaying={isPlayingReplay}
+              presets={presets}
+              onTogglePlay={() => setIsPlayingReplay(!isPlayingReplay)}
+              onTimeChange={handleTimeChange}
+              onSelectPreset={handlePresetClick}
+              onJumpToLatest={() => handleTimeChange(timeline.total_hours - 1)}
+              onReturnToRadio={() => setActiveMode('radio')}
             />
           </div>
 
-          {/* LOWER ACTION STRIP: The Case Board, Air Observatory & Share Postcard */}
-          <div className="flex items-center justify-between pt-2 border-t border-[#D5C7B0] text-xs font-bold">
+          {/* Right Column: Four Elongated Rounded-Rectangle Mode Buttons (Aligned tightly with LCD) */}
+          <div className="grid grid-cols-4 md:flex md:flex-col justify-between gap-1.5 md:gap-2 md:w-32 shrink-0 my-1 md:my-0">
+            {/* 1. RADIO */}
             <button
-              onClick={() => {
-                radioAudio.playKnobClick();
-                setActivePanel(activePanel === 'detective' ? 'none' : 'detective');
-              }}
-              className={`px-3 py-1.5 rounded-xl border flex items-center gap-1.5 transition-all ${
-                activePanel === 'detective'
-                  ? 'bg-[#C8553D] text-white border-[#B3452E] shadow-xs'
-                  : 'bg-[#EFE4CF] hover:bg-[#E5D7BF] text-[#2B2A33] border-[#D5C7B0]'
-              }`}
+              onClick={() => handleSwitchMode('radio')}
+              className={`radio-mode-button justify-center md:justify-start px-1.5 sm:px-2 md:px-3 py-2 md:py-2.5 ${activeMode === 'radio' ? 'active' : ''}`}
+              aria-label="Switch to Radio Mode"
             >
-              <Compass className="w-4 h-4 text-[#C8553D]" />
-              <span>{currentDict.ui?.detective_tab || 'The Case Board'}</span>
+              <RadioIcon className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
+              <span className="text-center md:text-left text-[9px] sm:text-[10px] md:text-xs font-bold truncate">RADIO</span>
+              <span className="active-indicator-pill hidden md:inline-block ml-auto" />
             </button>
 
+            {/* 2. DETECTIVE */}
             <button
-              onClick={() => {
-                radioAudio.playKnobClick();
-                setActivePanel(activePanel === 'observatory' ? 'none' : 'observatory');
-              }}
-              className={`px-3 py-1.5 rounded-xl border flex items-center gap-1.5 transition-all ${
-                activePanel === 'observatory'
-                  ? 'bg-[#C8553D] text-white border-[#B3452E] shadow-xs'
-                  : 'bg-[#EFE4CF] hover:bg-[#E5D7BF] text-[#2B2A33] border-[#D5C7B0]'
-              }`}
+              onClick={() => handleSwitchMode('detect')}
+              className={`radio-mode-button justify-center md:justify-start px-1.5 sm:px-2 md:px-3 py-2 md:py-2.5 ${activeMode === 'detect' ? 'active' : ''}`}
+              aria-label="Switch to Air Detective Mode"
             >
-              <Activity className="w-4 h-4 text-[#E9A23B]" />
-              <span>{currentDict.ui?.observatory_tab || 'Air Observatory'}</span>
+              <Compass className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
+              <span className="text-center md:text-left text-[9px] sm:text-[10px] md:text-xs font-bold truncate">DETECT</span>
+              <span className="active-indicator-pill hidden md:inline-block ml-auto" />
             </button>
 
+            {/* 3. SEISMOLOGY */}
             <button
-              onClick={() => {
-                radioAudio.playKnobClick();
-                setShowShareModal(true);
-              }}
-              className="px-3 py-1.5 rounded-xl bg-[#EFE4CF] hover:bg-[#E5D7BF] text-[#2B2A33] border border-[#D5C7B0] flex items-center gap-1.5 transition-colors shadow-xs"
+              onClick={() => handleSwitchMode('seismo')}
+              className={`radio-mode-button justify-center md:justify-start px-1.5 sm:px-2 md:px-3 py-2 md:py-2.5 ${activeMode === 'seismo' ? 'active' : ''}`}
+              aria-label="Switch to Air Seismology Mode"
             >
-              <Share2 className="w-4 h-4 text-[#2F7F86]" />
-              <span>{currentDict.ui?.share || 'Share'}</span>
+              <Activity className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
+              <span className="text-center md:text-left text-[9px] sm:text-[10px] md:text-xs font-bold truncate">SEISMO</span>
+              <span className="active-indicator-pill hidden md:inline-block ml-auto" />
+            </button>
+
+            {/* 4. REPLAY */}
+            <button
+              onClick={() => handleSwitchMode('replay')}
+              className={`radio-mode-button justify-center md:justify-start px-1.5 sm:px-2 md:px-3 py-2 md:py-2.5 ${activeMode === 'replay' ? 'active' : ''}`}
+              aria-label="Switch to Event Replay Mode"
+            >
+              <RotateCcw className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
+              <span className="text-center md:text-left text-[9px] sm:text-[10px] md:text-xs font-bold truncate">REPLAY</span>
+              <span className="active-indicator-pill hidden md:inline-block ml-auto" />
             </button>
           </div>
-        </section>
+        </div>
 
-        {/* SIDE INVESTIGATION / OBSERVATORY PANEL (Slides beside on desktop; full bottom sheet on mobile) */}
-        {activePanel !== 'none' && (
-          <aside
-            className="w-full lg:w-[480px] h-[600px] lg:h-auto rounded-3xl shadow-2xl overflow-hidden animate-fadeIn"
-            aria-label="Auxiliary Case & Observation Panel"
-          >
-            {activePanel === 'detective' ? (
-              <AirDetective
-                stations={stations}
-                currentStation={currentStation}
-                onSelectStation={id => handleStationChange(id)}
-                currentTimestamp={currentTimestamp}
-                currentPm25={currentPm25}
-                baselines={baselines}
-                anomalies={anomalies}
-                allStationCurrentValues={allStationCurrentValues}
-                today24Hours={today24Hours}
-                onClose={() => setActivePanel('none')}
-              />
-            ) : (
-              <AirObservatory
-                events={events}
-                amiData={amiData}
-                selectedEventId={selectedEventId}
-                onSelectEvent={id => setSelectedEventId(id)}
-                stations={stations}
-                allHourlyValues={hourlyData}
-                onClose={() => setActivePanel('none')}
-                onJumpToEvent={handleJumpToEvent}
-              />
-            )}
-          </aside>
-        )}
+        {/* ─── CABINET BOTTOM: Elongated Volume & Tuning Controls ────────────── */}
+        <LowerHardwareControls
+          volume={volumePercent}
+          onVolumeChange={handleVolumeChange}
+          stations={stations}
+          currentStationId={selectedStationId}
+          onSelectStation={handleStationChange}
+          isMuted={isMuted}
+          onToggleMute={() => {
+            const next = !isMuted;
+            setIsMuted(next);
+            radioAudio.setMuted(next);
+          }}
+        />
       </div>
 
-      {/* VOICE & BROADCAST SETTINGS SHEET */}
-      {showVoiceSettings && (
-        <VoiceSettingsSheet
-          language={language}
-          onSelectLanguage={setLanguage}
-          speed={voiceSpeed}
-          onSelectSpeed={setVoiceSpeed}
-          autoAnnounce={autoAnnounce}
-          onToggleAutoAnnounce={() => setAutoAnnounce(!autoAnnounce)}
-          activeSource={activeAudioSource}
-          onClose={() => setShowVoiceSettings(false)}
+      {/* ─── MODALS ──────────────────────────────────────────────────────────── */}
+      {showPrintModal && (
+        <InvestigationNoteModal
+          currentStation={currentStation}
+          currentTimestamp={currentTimestamp}
+          currentPm25={currentPm25}
+          currentMedian={currentMedian}
+          stations={stations}
+          allStationCurrentValues={allStationCurrentValues}
+          onClose={() => setShowPrintModal(false)}
         />
       )}
 
-      {/* SHARE CARD MODAL */}
       {showShareModal && (
         <ShareCardModal
           station={currentStation}
@@ -730,10 +687,7 @@ export default function App() {
         />
       )}
 
-      {/* ABOUT SHEET MODAL */}
       {showAboutModal && <AboutModal onClose={() => setShowAboutModal(false)} />}
-
-      {/* ONBOARDING QUICK HINT */}
       {showOnboarding && <OnboardingHint onDismiss={() => setShowOnboarding(false)} />}
     </main>
   );

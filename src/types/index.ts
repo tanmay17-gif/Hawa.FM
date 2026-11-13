@@ -109,6 +109,7 @@ export interface PresetMoment {
   fullTitle: string;
   timestamp: string;
   stationId: string;
+  eventId?: string;
   description: string;
 }
 
